@@ -5,8 +5,8 @@ FLAGS +=
 CFLAGS +=
 CXXFLAGS += -std=c++17 -I./src
 
-# Include all source files
-SOURCES += $(wildcard src/*.cpp)
+# Include all source files (excluding Daisy hardware main_daisy.cpp)
+SOURCES += $(filter-out src/main_daisy.cpp, $(wildcard src/*.cpp))
 
 # Distributables (assets and plugin manifest)
 DISTRIBUTABLES += res plugin.json
