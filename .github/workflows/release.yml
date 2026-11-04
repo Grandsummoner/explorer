@@ -1,1 +1,76 @@
-s
+name: Build and Release VCV Rack Plugin
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: lin-x64
+            rack-sdk-url: https://vcvrack.com/downloads/Rack-SDK-2.5.2-lin-x64.zip
+          - os: macos-latest
+            platform: mac-x64
+            rack-sdk-url: https://vcvrack.com/downloads/Rack-SDK-2.5.2-mac-x64.zip
+          - os: macos-14
+            platform: mac-arm64
+            rack-sdk-url: https://vcvrack.com/downloads/Rack-SDK-2.5.2-mac-arm64.zip
+          - os: windows-latest
+            platform: win-x64
+            rack-sdk-url: https://vcvrack.com/downloads/Rack-SDK-2.5.2-win-x64.zip
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up build environment (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl-dev libglu-dev libasound2-dev
+
+      - name: Download VCV Rack SDK
+        run: |
+          curl -o Rack-SDK.zip ${{ matrix.rack-sdk-url }}
+          unzip -q Rack-SDK.zip
+
+      - name: Build plugin package
+        env:
+          RACK_DIR: Rack-SDK
+        run: |
+          make -j$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 2) dist
+
+      - name: Upload Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Explorer-${{ matrix.platform }}
+          path: dist/*.vcvplugin
+
+  release:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-artifacts
+
+      - name: Publish Release to GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-artifacts/**/*.vcvplugin
+          generate_release_notes: true
+          draft: false
+          prerelease: false
