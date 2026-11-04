@@ -1,0 +1,28 @@
+{
+  "slug": "HermeticModular",
+  "name": "Hermetic Modular",
+  "version": "1.0.0",
+  "license": "MIT",
+  "brand": "Hermetic Modular",
+  "author": "Hermetic Modular",
+  "authorEmail": "support@hermeticmodular.com",
+  "authorUrl": "https://hermeticmodular.com",
+  "pluginUrl": "https://github.com/hermetic-modular/alchemy-sdk",
+  "manualUrl": "https://hermeticmodular.com/docs",
+  "sourceUrl": "https://github.com/hermetic-modular/alchemy-sdk",
+  "modules": [
+    {
+      "slug": "Explorer",
+      "name": "Explorer",
+      "description": "12 HP field-programmable DSP module with 102 addressable RGB LEDs, 6 dynamic CV jacks, pot catch, and motion parameter locking (Daisy Seed / STM32H750 digital twin).",
+      "tags": [
+        "Equalizer",
+        "Delay",
+        "Reverb",
+        "Hardware emulator",
+        "Dual-mono",
+        "Polyphonic"
+      ]
+    }
+  ]
+}
