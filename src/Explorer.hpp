@@ -40,6 +40,8 @@ struct Explorer : Module {
         NUM_OUTPUTS
     };
     enum LightIds {
+        LINK_LEFT_LIGHT,
+        LINK_RIGHT_LIGHT,
         // 102 RGB LEDs: 96 knob ring LEDs + 6 status LEDs (3 channels per LED: R, G, B)
         LEDS_START,
         NUM_LIGHTS = LEDS_START + (102 * 3)

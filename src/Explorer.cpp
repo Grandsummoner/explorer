@@ -1,137 +1,101 @@
 #include "Explorer.hpp"
 
-// Custom NanoVG widget that renders all silk-screened text labels, titles, and section headers
-struct ExplorerLabelsWidget : TransparentWidget {
-    Explorer* module;
+// Custom Stellar-style button widget: square button with rounded corners and clean border
+struct ExplorerButton : ParamWidget {
+    Module* mod = nullptr;
+    int lightId = -1;
+    NVGcolor litColor = nvgRGB(0x8A, 0x2A, 0x2A);   // Maroon accent
+    NVGcolor unlitColor = nvgRGB(0xED, 0xE7, 0xDC); // Stellar cream button
 
-    ExplorerLabelsWidget(Explorer* m) : module(m) {}
+    ExplorerButton() {
+        box.size = mm2px(Vec(4.8, 4.8));
+    }
+
+    void onButton(const ButtonEvent& e) override {
+        ParamWidget::onButton(e);
+        if (e.button == GLFW_MOUSE_BUTTON_LEFT && e.action == GLFW_PRESS) {
+            ParamQuantity* pq = getParamQuantity();
+            if (pq) pq->setValue(1.f);
+            e.consume(this);
+        }
+    }
+
+    void onDragEnd(const DragEndEvent& e) override {
+        ParamWidget::onDragEnd(e);
+        ParamQuantity* pq = getParamQuantity();
+        if (pq) pq->setValue(0.f);
+    }
 
     void draw(const DrawArgs& args) override {
-        nvgSave(args.vg);
+        ParamQuantity* pq = getParamQuantity();
+        bool pressed = pq ? pq->getValue() > 0.5f : false;
 
-        // Load standard VCV Rack system fonts
-        std::shared_ptr<Font> fontBold = APP->window->loadFont(asset::system("res/fonts/Nunito-Bold.ttf"));
-        if (!fontBold) {
-            fontBold = APP->window->loadFont(asset::system("res/fonts/ShareTechMono-Regular.ttf"));
-        }
-        std::shared_ptr<Font> fontRegular = APP->window->loadFont(asset::system("res/fonts/ShareTechMono-Regular.ttf"));
-
-        if (fontBold) {
-            nvgFontFaceId(args.vg, fontBold->handle);
-
-            // 1. Module Header Title (matching Stellar / Spaces Command aesthetic)
-            nvgFontSize(args.vg, 12.5f);
-            nvgFillColor(args.vg, nvgRGB(0x1C, 0x19, 0x17)); // Deep charcoal
-            nvgTextAlign(args.vg, NVG_ALIGN_CENTER | NVG_ALIGN_MIDDLE);
-            nvgText(args.vg, 90.0f, 23.0f, "EXPLORER", NULL);
-
-            // Subtitle
-            nvgFontSize(args.vg, 6.2f);
-            nvgFillColor(args.vg, nvgRGB(0x78, 0x71, 0x6C)); // Muted stone
-            nvgText(args.vg, 90.0f, 33.5f, "field-programmable dsp", NULL);
-
-            // Brand
-            nvgFontSize(args.vg, 5.0f);
-            nvgFillColor(args.vg, nvgRGB(0xA8, 0xA2, 0x9E));
-            nvgText(args.vg, 90.0f, 41.0f, "HERMETIC MODULAR", NULL);
-
-            // 2. Rotated Vertical Section Header Labels on Left Margin
-            nvgFontSize(args.vg, 5.8f);
-            nvgFillColor(args.vg, nvgRGB(0x44, 0x40, 0x3C));
-
-            // Section 1: AUDIO
-            nvgSave(args.vg);
-            nvgTranslate(args.vg, 10.0f, 72.0f);
-            nvgRotate(args.vg, -M_PI / 2.0f);
-            nvgText(args.vg, 0.0f, 0.0f, "AUDIO", NULL);
-            nvgRestore(args.vg);
-
-            // Section 2: CTRL
-            nvgSave(args.vg);
-            nvgTranslate(args.vg, 10.0f, 113.0f);
-            nvgRotate(args.vg, -M_PI / 2.0f);
-            nvgText(args.vg, 0.0f, 0.0f, "CTRL", NULL);
-            nvgRestore(args.vg);
-
-            // Section 3: DSP 1 & DSP 2
-            nvgSave(args.vg);
-            nvgTranslate(args.vg, 10.0f, 160.0f);
-            nvgRotate(args.vg, -M_PI / 2.0f);
-            nvgText(args.vg, 0.0f, 0.0f, "DSP 1", NULL);
-            nvgRestore(args.vg);
-
-            nvgSave(args.vg);
-            nvgTranslate(args.vg, 10.0f, 220.0f);
-            nvgRotate(args.vg, -M_PI / 2.0f);
-            nvgText(args.vg, 0.0f, 0.0f, "DSP 2", NULL);
-            nvgRestore(args.vg);
-
-            // Section 4: FIELD
-            nvgSave(args.vg);
-            nvgTranslate(args.vg, 10.0f, 327.0f);
-            nvgRotate(args.vg, -M_PI / 2.0f);
-            nvgText(args.vg, 0.0f, 0.0f, "FIELD", NULL);
-            nvgRestore(args.vg);
-
-            // 3. Audio Jack Labels (Y: 72 -> labels at Y: 86)
-            nvgFontSize(args.vg, 6.0f);
-            nvgFillColor(args.vg, nvgRGB(0x29, 0x25, 0x24));
-            nvgText(args.vg, 30.0f, 86.5f, "IN L", NULL);
-            nvgText(args.vg, 70.0f, 86.5f, "IN R", NULL);
-            nvgFillColor(args.vg, nvgRGB(0xC2, 0x41, 0x0C)); // Terracotta orange
-            nvgText(args.vg, 110.0f, 86.5f, "OUT L", NULL);
-            nvgText(args.vg, 150.0f, 86.5f, "OUT R", NULL);
-
-            // 4. Button Labels (Y: 111 -> labels at Y: 123.5)
-            nvgFillColor(args.vg, nvgRGB(0x44, 0x40, 0x3C));
-            nvgFontSize(args.vg, 5.5f);
-            nvgText(args.vg, 40.0f, 123.5f, "PAGE", NULL);
-            nvgText(args.vg, 90.0f, 123.5f, "LOCK", NULL);
-            nvgText(args.vg, 140.0f, 123.5f, "MODE", NULL);
-
-            // 5. Knob Labels (Row 1: Y 160 -> Y 188; Row 2: Y 220 -> Y 248)
-            nvgFontSize(args.vg, 6.5f);
-            nvgFillColor(args.vg, nvgRGB(0x1C, 0x19, 0x17));
-            
-            int mode = (module) ? module->activeMode : 0;
-            if (mode == 0) {
-                // Cloud Delay & Reverb primary mode
-                nvgText(args.vg, 34.0f, 188.0f, "TIME", NULL);
-                nvgText(args.vg, 90.0f, 188.0f, "FDBK", NULL);
-                nvgText(args.vg, 146.0f, 188.0f, "DIFF", NULL);
-
-                nvgText(args.vg, 34.0f, 248.0f, "TONE", NULL);
-                nvgText(args.vg, 90.0f, 248.0f, "MOD", NULL);
-                nvgText(args.vg, 146.0f, 248.0f, "MIX", NULL);
-            } else {
-                // Stereo 3-Band Parametric EQ & Drive mode
-                nvgText(args.vg, 34.0f, 188.0f, "LOW", NULL);
-                nvgText(args.vg, 90.0f, 188.0f, "MID", NULL);
-                nvgText(args.vg, 146.0f, 188.0f, "HIGH", NULL);
-
-                nvgText(args.vg, 34.0f, 248.0f, "FREQ", NULL);
-                nvgText(args.vg, 90.0f, 248.0f, "DRIVE", NULL);
-                nvgText(args.vg, 146.0f, 248.0f, "LEVEL", NULL);
-            }
-
-            // 6. Field CV Jack Labels (Row 1: Y 309 -> Y 323; Row 2: Y 345 -> Y 359)
-            nvgFontSize(args.vg, 5.5f);
-            nvgFillColor(args.vg, nvgRGB(0x03, 0x69, 0xA1)); // Cyan/blue
-            nvgText(args.vg, 34.0f, 323.0f, "CV 1", NULL);
-            nvgText(args.vg, 90.0f, 323.0f, "CV 2", NULL);
-            nvgText(args.vg, 146.0f, 323.0f, "CV 3", NULL);
-
-            nvgFillColor(args.vg, nvgRGB(0x5B, 0x21, 0xB6)); // Violet
-            nvgText(args.vg, 34.0f, 359.0f, "CV 4", NULL);
-            nvgText(args.vg, 90.0f, 359.0f, "CV 5", NULL);
-            nvgText(args.vg, 146.0f, 359.0f, "CV 6", NULL);
-        }
-
-        nvgRestore(args.vg);
+        nvgBeginPath(args.vg);
+        nvgRoundedRect(args.vg, 0.f, 0.f, box.size.x, box.size.y, 0.8f);
+        nvgFillColor(args.vg, pressed ? litColor : unlitColor);
+        nvgFill(args.vg);
+        nvgStrokeColor(args.vg, nvgRGB(0x1A, 0x18, 0x14));
+        nvgStrokeWidth(args.vg, 0.8f);
+        nvgStroke(args.vg);
     }
 };
 
-// Custom NanoVG widget that renders the 102 addressable RGB LEDs & rings
+// Custom Stellar-style knob widget: dark gradient with white pointer indicator
+struct ExplorerKnob : ParamWidget {
+    ExplorerKnob() {
+        box.size = mm2px(Vec(6.4, 6.4));
+    }
+
+    void onButton(const ButtonEvent& e) override {
+        ParamWidget::onButton(e);
+        if (e.action == GLFW_PRESS && e.button == GLFW_MOUSE_BUTTON_LEFT) {
+            e.consume(this);
+        }
+    }
+
+    void onDragMove(const DragMoveEvent& e) override {
+        ParamQuantity* pq = getParamQuantity();
+        if (!pq) return;
+        float delta = -e.mouseDelta.y * 0.005f;
+        pq->setValue(clamp(pq->getValue() + delta, pq->getMinValue(), pq->getMaxValue()));
+    }
+
+    void onDoubleClick(const DoubleClickEvent& e) override {
+        ParamQuantity* pq = getParamQuantity();
+        if (pq) pq->reset();
+    }
+
+    void draw(const DrawArgs& args) override {
+        float cx = box.size.x / 2.f, cy = box.size.y / 2.f;
+        float r = box.size.x / 2.f;
+
+        // Knob body with subtle gradient
+        nvgBeginPath(args.vg);
+        nvgCircle(args.vg, cx, cy, r);
+        NVGpaint grad = nvgLinearGradient(args.vg, cx, cy - r, cx, cy + r,
+                                          nvgRGB(0x26, 0x26, 0x28), nvgRGB(0x1A, 0x1A, 0x1C));
+        nvgFillPaint(args.vg, grad);
+        nvgFill(args.vg);
+        nvgStrokeColor(args.vg, nvgRGB(0x0A, 0x0A, 0x0A));
+        nvgStrokeWidth(args.vg, 0.6f);
+        nvgStroke(args.vg);
+
+        // Indicator line
+        float value = 0.f;
+        ParamQuantity* pq = getParamQuantity();
+        if (pq) value = pq->getScaledValue();
+        float angle = rescale(value, 0.f, 1.f, -0.8f * (float)M_PI, 0.8f * (float)M_PI) - (float)M_PI / 2.f;
+
+        nvgBeginPath(args.vg);
+        nvgMoveTo(args.vg, cx, cy);
+        nvgLineTo(args.vg, cx + std::cos(angle) * r * 0.8f, cy + std::sin(angle) * r * 0.8f);
+        nvgStrokeColor(args.vg, nvgRGB(0xE8, 0xE0, 0xD0));
+        nvgStrokeWidth(args.vg, 0.9f);
+        nvgStroke(args.vg);
+    }
+};
+
+// Custom NanoVG widget that renders the 102 addressable RGB LEDs around the 6 knobs
 struct ExplorerLedRingsWidget : TransparentWidget {
     Explorer* module;
 
@@ -140,21 +104,19 @@ struct ExplorerLedRingsWidget : TransparentWidget {
     void draw(const DrawArgs& args) override {
         nvgSave(args.vg);
 
-        // Knob Centers: matching Explorer panel SVG layout
-        // Row 1: (34, 160), (90, 160), (146, 160)
-        // Row 2: (34, 220), (90, 220), (146, 220)
-        Vec knobCenters[6] = {
-            Vec(34, 160), Vec(90, 160), Vec(146, 160),
-            Vec(34, 220), Vec(90, 220), Vec(146, 220)
+        // Knob Centers matching explorer_layout.json (in mm, converted to px)
+        Vec knobCentersMm[6] = {
+            Vec(15.50f, 55.30f), Vec(32.98f, 55.30f), Vec(50.46f, 55.30f),
+            Vec(15.50f, 78.80f), Vec(32.98f, 78.80f), Vec(50.46f, 78.80f)
         };
 
-        const float radius = 18.0f;
+        const float radius = mm2px(4.3f);
         const int numLeds = 16;
         const float minAngle = -135.0f * (M_PI / 180.0f);
         const float maxAngle = 135.0f * (M_PI / 180.0f);
 
         for (int k = 0; k < 6; k++) {
-            Vec center = knobCenters[k];
+            Vec center = mm2px(knobCentersMm[k]);
             int startLed = k * 16;
 
             for (int i = 0; i < numLeds; i++) {
@@ -173,22 +135,22 @@ struct ExplorerLedRingsWidget : TransparentWidget {
                 // If unlit, render subtle sand/cream guide dot
                 if (r <= 30 && g <= 30 && b <= 30) {
                     nvgBeginPath(args.vg);
-                    nvgCircle(args.vg, x, y, 1.1f);
-                    nvgFillColor(args.vg, nvgRGBA(180, 172, 158, 160));
+                    nvgCircle(args.vg, x, y, 0.9f);
+                    nvgFillColor(args.vg, nvgRGBA(165, 155, 140, 150));
                     nvgFill(args.vg);
                 } else {
                     NVGcolor col = nvgRGBA(r, g, b, 255);
 
                     // Lit LED dot
                     nvgBeginPath(args.vg);
-                    nvgCircle(args.vg, x, y, 1.7f);
+                    nvgCircle(args.vg, x, y, 1.4f);
                     nvgFillColor(args.vg, col);
                     nvgFill(args.vg);
 
                     // Soft Bloom Halo
                     nvgBeginPath(args.vg);
-                    nvgCircle(args.vg, x, y, 3.6f);
-                    nvgFillColor(args.vg, nvgRGBA(r, g, b, 65));
+                    nvgCircle(args.vg, x, y, 2.8f);
+                    nvgFillColor(args.vg, nvgRGBA(r, g, b, 50));
                     nvgFill(args.vg);
                 }
             }
@@ -234,6 +196,10 @@ void Explorer::process(const ProcessArgs& args) {
         stereo_eq::Init(args.sampleRate);
         cloud_delay::Init(args.sampleRate);
     }
+
+    // Link presence indicators
+    lights[LINK_LEFT_LIGHT].setBrightness(0.9f);
+    lights[LINK_RIGHT_LIGHT].setBrightness(0.9f);
 
     // 1. Read Knobs with Pot Catch
     for (int i = 0; i < 6; i++) {
@@ -308,52 +274,73 @@ void Explorer::dataFromJson(json_t* rootJ) {
 struct ExplorerWidget : ModuleWidget {
     ExplorerWidget(Explorer* module) {
         setModule(module);
+
+        // Automatically size from panel SVG (exactly matching Stellar convention)
         setPanel(createPanel(asset::plugin(pluginInstance, "res/Explorer.svg")));
 
-        // 1. Add Silk-screened Labels and Text Overlay (drawn under knobs & ports)
-        ExplorerLabelsWidget* labels = new ExplorerLabelsWidget(module);
-        labels->box.size = box.size;
-        addChild(labels);
-
-        // 2. Add 102 Addressable LED Rings Renderer Widget
-        ExplorerLedRingsWidget* ledRings = new ExplorerLedRingsWidget(module);
-        ledRings->box.size = box.size;
-        addChild(ledRings);
-
-        // Screws (Classic Eurorack)
-        addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, 0)));
-        addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
-        addChild(createWidget<ScrewSilver>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-        addChild(createWidget<ScrewSilver>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-
-        // Top Audio I/O Jacks: In L, In R, Out L, Out R
-        addInput(createInputCentered<PJ301MPort>(Vec(30, 72), module, Explorer::AUDIO_IN_L));
-        addInput(createInputCentered<PJ301MPort>(Vec(70, 72), module, Explorer::AUDIO_IN_R));
-        addOutput(createOutputCentered<PJ301MPort>(Vec(110, 72), module, Explorer::AUDIO_OUT_L));
-        addOutput(createOutputCentered<PJ301MPort>(Vec(150, 72), module, Explorer::AUDIO_OUT_R));
-
-        // 3 Pushbuttons: Page, Lock, Preset
-        addParam(createParamCentered<VCVButton>(Vec(40, 111), module, Explorer::BTN_PAGE));
-        addParam(createParamCentered<VCVButton>(Vec(90, 111), module, Explorer::BTN_LOCK));
-        addParam(createParamCentered<VCVButton>(Vec(140, 111), module, Explorer::BTN_PRESET));
-
-        // 6 Knobs: RoundBlackKnob positioned on centers
-        Vec knobCenters[6] = {
-            Vec(34, 160), Vec(90, 160), Vec(146, 160),
-            Vec(34, 220), Vec(90, 220), Vec(146, 220)
+        // Helper lambdas for positioning in exact mm coordinates
+        auto inPort = [&](float x, float y, int id) {
+            addInput(createInputCentered<PJ301MPort>(mm2px(Vec(x, y)), module, id));
         };
-        for (int i = 0; i < 6; i++) {
-            addParam(createParamCentered<RoundBlackKnob>(knobCenters[i], module, Explorer::KNOB_1 + i));
+        auto outPort = [&](float x, float y, int id) {
+            addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(x, y)), module, id));
+        };
+
+        // 1. Audio I/O Jacks (Row 1): IN L, IN R, OUT L, OUT R
+        inPort(14.00f, 18.10f, Explorer::AUDIO_IN_L);
+        inPort(26.65f, 18.10f, Explorer::AUDIO_IN_R);
+        outPort(39.31f, 18.10f, Explorer::AUDIO_OUT_L);
+        outPort(51.96f, 18.10f, Explorer::AUDIO_OUT_R);
+
+        // 2. Control Buttons (Row 2): PAGE, LOCK, MODE (using ExplorerButton matching Stellar style)
+        {
+            auto* btnPage = createParamCentered<ExplorerButton>(mm2px(Vec(16.50f, 34.60f)), module, Explorer::BTN_PAGE);
+            btnPage->mod = module;
+            addParam(btnPage);
+
+            auto* btnLock = createParamCentered<ExplorerButton>(mm2px(Vec(32.98f, 34.60f)), module, Explorer::BTN_LOCK);
+            btnLock->mod = module;
+            addParam(btnLock);
+
+            auto* btnMode = createParamCentered<ExplorerButton>(mm2px(Vec(49.46f, 34.60f)), module, Explorer::BTN_PRESET);
+            btnMode->mod = module;
+            addParam(btnMode);
         }
 
-        // 6 Field-Programmable Jacks (Row 1: CV 1-3, Row 2: CV 4-6)
-        Vec fieldJackCenters[6] = {
-            Vec(34, 309), Vec(90, 309), Vec(146, 309),
-            Vec(34, 345), Vec(90, 345), Vec(146, 345)
-        };
-        for (int i = 0; i < 6; i++) {
-            addInput(createInputCentered<PJ301MPort>(fieldJackCenters[i], module, Explorer::FIELD_IN_1 + i));
+        // 3. LED Rings Widget (rendered around the knobs)
+        if (module) {
+            ExplorerLedRingsWidget* ledRings = new ExplorerLedRingsWidget(module);
+            ledRings->box.size = box.size;
+            addChild(ledRings);
         }
+
+        // 4. DSP Knobs (Row 3): 6 Knobs in 2 rows of 3 (using ExplorerKnob matching Stellar style)
+        // Sub-row 1 (TIME, FDBK, DIFF)
+        addParam(createParamCentered<ExplorerKnob>(mm2px(Vec(15.50f, 55.30f)), module, Explorer::KNOB_1));
+        addParam(createParamCentered<ExplorerKnob>(mm2px(Vec(32.98f, 55.30f)), module, Explorer::KNOB_2));
+        addParam(createParamCentered<ExplorerKnob>(mm2px(Vec(50.46f, 55.30f)), module, Explorer::KNOB_3));
+
+        // Sub-row 2 (TONE, MOD, MIX)
+        addParam(createParamCentered<ExplorerKnob>(mm2px(Vec(15.50f, 78.80f)), module, Explorer::KNOB_4));
+        addParam(createParamCentered<ExplorerKnob>(mm2px(Vec(32.98f, 78.80f)), module, Explorer::KNOB_5));
+        addParam(createParamCentered<ExplorerKnob>(mm2px(Vec(50.46f, 78.80f)), module, Explorer::KNOB_6));
+
+        // 5. Field CV Jacks (Row 4): 6 CV Ports in 2 rows of 3
+        // Sub-row 1 (CV 1, CV 2, CV 3)
+        inPort(15.50f, 101.50f, Explorer::FIELD_IN_1);
+        inPort(32.98f, 101.50f, Explorer::FIELD_IN_1 + 1);
+        inPort(50.46f, 101.50f, Explorer::FIELD_IN_1 + 2);
+
+        // Sub-row 2 (CV 4, CV 5, CV 6)
+        inPort(15.50f, 113.70f, Explorer::FIELD_IN_1 + 3);
+        inPort(32.98f, 113.70f, Explorer::FIELD_IN_1 + 4);
+        inPort(50.46f, 113.70f, Explorer::FIELD_IN_1 + 5);
+
+        // 6. Corner Status/Link Lights (Matching Stellar's small blue link lights)
+        addChild(createLightCentered<SmallLight<BlueLight>>(mm2px(Vec(5.00f, 5.00f)), module, Explorer::LINK_LEFT_LIGHT));
+        addChild(createLightCentered<SmallLight<BlueLight>>(mm2px(Vec(55.96f, 5.00f)), module, Explorer::LINK_RIGHT_LIGHT));
+
+        // Notice: NO Screws added! Exactly like Stellar, eliminating any protrusion outside the side panel!
     }
 };
 
