@@ -1,120 +1,142 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="180" height="380" viewBox="0 0 180 380">
   <defs>
-    <!-- Background brushed black anodized aluminum -->
-    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stopColor="#1a1a1e"/>
-      <stop offset="50%" stopColor="#121215"/>
-      <stop offset="100%" stopColor="#0b0b0d"/>
+    <!-- Stellar Warm Cream Base Gradient -->
+    <linearGradient id="stellarBase" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#EFE9DF"/>
+      <stop offset="50%" stop-color="#EAE3D6"/>
+      <stop offset="100%" stop-color="#E2DBD0"/>
     </linearGradient>
 
-    <!-- Subtle horizontal brush lines -->
-    <pattern id="brushLines" width="180" height="4" patternUnits="userSpaceOnUse">
-      <line x1="0" y1="1" x2="180" y2="1" stroke="#ffffff" stroke-width="0.3" opacity="0.03"/>
-    </pattern>
+    <!-- Inset Card Background Gradient -->
+    <linearGradient id="cardGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FAF6EF"/>
+      <stop offset="100%" stop-color="#F2ECE2"/>
+    </linearGradient>
 
-    <!-- Gold metallic gradient for Explorer logo -->
-    <linearGradient id="goldGrad" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stopColor="#fbbf24"/>
-      <stop offset="50%" stopColor="#f59e0b"/>
-      <stop offset="100%" stopColor="#d97706"/>
+    <!-- Metallic Silver Bezel Gradient -->
+    <linearGradient id="silverBezel" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="40%" stop-color="#D4D4D8"/>
+      <stop offset="100%" stop-color="#71717A"/>
+    </linearGradient>
+
+    <!-- Cyan Status Indicator Gem -->
+    <radialGradient id="cyanGem" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#A5F3FC"/>
+      <stop offset="40%" stop-color="#06B6D4"/>
+      <stop offset="100%" stop-color="#0E7490"/>
+    </radialGradient>
+
+    <!-- Terracotta Audio Out Ring Gradient -->
+    <linearGradient id="orangeRing" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#F97316"/>
+      <stop offset="100%" stop-color="#C2410C"/>
     </linearGradient>
   </defs>
 
-  <!-- Panel Base Plate -->
-  <rect width="180" height="380" fill="url(#bgGrad)"/>
-  <rect width="180" height="380" fill="url(#brushLines)"/>
+  <!-- 1. Base Panel Plate (12 HP Eurorack) -->
+  <rect width="180" height="380" fill="url(#stellarBase)"/>
 
-  <!-- Left and right bevel borders -->
-  <line x1="1" y1="0" x2="1" y2="380" stroke="#3f3f46" stroke-width="1" opacity="0.6"/>
-  <line x1="179" y1="0" x2="179" y2="380" stroke="#27272a" stroke-width="1" opacity="0.6"/>
+  <!-- Left and right subtle bevel border -->
+  <line x1="0.5" y1="0" x2="0.5" y2="380" stroke="#FAF7F2" stroke-width="1"/>
+  <line x1="179.5" y1="0" x2="179.5" y2="380" stroke="#C8BFAD" stroke-width="1"/>
 
-  <!-- Eurorack Mounting Screws (12 HP standard oval slots) -->
-  <g fill="#09090b" stroke="#3f3f46" stroke-width="0.8">
+  <!-- 2. Standard Eurorack Oval Mounting Slots -->
+  <g fill="#A89F8E" stroke="#78716C" stroke-width="0.6">
     <rect x="7.5" y="3" width="15" height="4.5" rx="2.25"/>
     <rect x="157.5" y="3" width="15" height="4.5" rx="2.25"/>
     <rect x="7.5" y="372.5" width="15" height="4.5" rx="2.25"/>
     <rect x="157.5" y="372.5" width="15" height="4.5" rx="2.25"/>
   </g>
 
-  <!-- Header Silk-Screen -->
-  <text x="90" y="24" fill="#a1a1aa" font-family="'DejaVu Sans', sans-serif" font-weight="900" font-size="6.5" letter-spacing="2" text-anchor="middle">HERMETIC MODULAR</text>
-  <text x="90" y="38" fill="url(#goldGrad)" font-family="'DejaVu Sans', sans-serif" font-weight="900" font-size="11" letter-spacing="3" text-anchor="middle">EXPLORER</text>
-  <line x1="20" y1="44" x2="160" y2="44" stroke="#27272a" stroke-width="0.8"/>
-  <line x1="60" y1="44" x2="120" y2="44" stroke="#d97706" stroke-width="0.8"/>
+  <!-- 3. Top-Right Cyan Status Gem & Top-Left Dark Rivet (Signature Stellar Details) -->
+  <!-- Top Left Rivet -->
+  <circle cx="14" cy="14" r="3.5" fill="#292524" stroke="#78716C" stroke-width="0.8"/>
+  <circle cx="14" cy="14" r="1.5" fill="#44403C"/>
 
-  <!-- Top Audio I/O Section (Y: 52 to 86) -->
-  <rect x="8" y="48" width="164" height="42" rx="3" fill="#09090b" stroke="#27272a" stroke-width="0.8"/>
-  <text x="30" y="58" fill="#71717a" font-family="'DejaVu Sans', sans-serif" font-size="5" font-weight="700" text-anchor="middle">IN L</text>
-  <text x="70" y="58" fill="#71717a" font-family="'DejaVu Sans', sans-serif" font-size="5" font-weight="700" text-anchor="middle">IN R</text>
-  <text x="110" y="58" fill="#f59e0b" font-family="'DejaVu Sans', sans-serif" font-size="5" font-weight="700" text-anchor="middle">OUT L</text>
-  <text x="150" y="58" fill="#f59e0b" font-family="'DejaVu Sans', sans-serif" font-size="5" font-weight="700" text-anchor="middle">OUT R</text>
+  <!-- Top Right Cyan Status Gem -->
+  <circle cx="166" cy="14" r="4.2" fill="#D4D4D8" stroke="#71717A" stroke-width="0.75"/>
+  <circle cx="166" cy="14" r="3.0" fill="url(#cyanGem)"/>
+  <circle cx="165" cy="13" r="1.0" fill="#FFFFFF" opacity="0.8"/>
 
-  <!-- Jack target centers (Top Audio) -->
-  <circle cx="30" cy="72" r="10" fill="none" stroke="#27272a" stroke-width="0.75"/>
-  <circle cx="70" cy="72" r="10" fill="none" stroke="#27272a" stroke-width="0.75"/>
-  <circle cx="110" cy="72" r="10" fill="none" stroke="#d97706" stroke-width="0.75" opacity="0.6"/>
-  <circle cx="150" cy="72" r="10" fill="none" stroke="#d97706" stroke-width="0.75" opacity="0.6"/>
+  <!-- Top Decorative Header Rule -->
+  <line x1="24" y1="46" x2="156" y2="46" stroke="#D5CDBD" stroke-width="0.8"/>
+  <line x1="68" y1="46" x2="112" y2="46" stroke="#0E7490" stroke-width="1.2"/>
 
-  <!-- 3 Tactile Pushbuttons Section (Y: 96 to 118) -->
-  <rect x="12" y="96" width="156" height="22" rx="2" fill="#141417" stroke="#27272a" stroke-width="0.6"/>
-  <text x="40" y="104" fill="#a1a1aa" font-family="'DejaVu Sans', sans-serif" font-size="5" font-weight="700" text-anchor="middle">PAGE</text>
-  <circle cx="40" cy="111" r="4" fill="#27272a" stroke="#3f3f46" stroke-width="0.5"/>
+  <!-- 4. Section 1: AUDIO I/O Card (Y: 52 to 92) -->
+  <rect x="16" y="52" width="152" height="40" rx="3.5" fill="url(#cardGrad)" stroke="#D5CDBD" stroke-width="0.8"/>
+  <!-- Left section stripe -->
+  <rect x="16" y="52" width="3" height="40" rx="1.5" fill="#44403C"/>
 
-  <text x="90" y="104" fill="#fbbf24" font-family="'DejaVu Sans', sans-serif" font-size="5" font-weight="700" text-anchor="middle">LOCK</text>
-  <circle cx="90" cy="111" r="4" fill="#27272a" stroke="#d97706" stroke-width="0.5"/>
+  <!-- Audio In Jacks Bezels (X: 30, 70, Y: 72) -->
+  <circle cx="30" cy="72" r="11" fill="#EAE3D6" stroke="#C4BCAB" stroke-width="0.8"/>
+  <circle cx="30" cy="72" r="9.5" fill="#F4EFE6" stroke="#78716C" stroke-width="0.6"/>
 
-  <text x="140" y="104" fill="#a1a1aa" font-family="'DejaVu Sans', sans-serif" font-size="5" font-weight="700" text-anchor="middle">PRESET</text>
-  <circle cx="140" cy="111" r="4" fill="#27272a" stroke="#3f3f46" stroke-width="0.5"/>
+  <circle cx="70" cy="72" r="11" fill="#EAE3D6" stroke="#C4BCAB" stroke-width="0.8"/>
+  <circle cx="70" cy="72" r="9.5" fill="#F4EFE6" stroke="#78716C" stroke-width="0.6"/>
 
-  <!-- 6 Knobs with 16-LED rings section (Y: 126 to 280) -->
-  <!-- Row 1: Knobs 1, 2, 3 (Center Y: 160) -->
-  <circle cx="34" cy="160" r="18" fill="none" stroke="#27272a" stroke-dasharray="2 3" stroke-width="1"/>
-  <text x="34" y="137" fill="#e4e4e7" font-family="'DejaVu Sans', sans-serif" font-size="5.5" font-weight="700" text-anchor="middle">KNOB 1</text>
+  <!-- Audio Out Jacks Terracotta Rings (X: 110, 150, Y: 72) -->
+  <circle cx="110" cy="72" r="11" fill="#FED7AA" stroke="#EA580C" stroke-width="1.2"/>
+  <circle cx="110" cy="72" r="9.5" fill="#FFF7ED" stroke="#C2410C" stroke-width="0.6"/>
 
-  <circle cx="90" cy="160" r="18" fill="none" stroke="#27272a" stroke-dasharray="2 3" stroke-width="1"/>
-  <text x="90" y="137" fill="#e4e4e7" font-family="'DejaVu Sans', sans-serif" font-size="5.5" font-weight="700" text-anchor="middle">KNOB 2</text>
+  <circle cx="150" cy="72" r="11" fill="#FED7AA" stroke="#EA580C" stroke-width="1.2"/>
+  <circle cx="150" cy="72" r="9.5" fill="#FFF7ED" stroke="#C2410C" stroke-width="0.6"/>
 
-  <circle cx="146" cy="160" r="18" fill="none" stroke="#27272a" stroke-dasharray="2 3" stroke-width="1"/>
-  <text x="146" y="137" fill="#e4e4e7" font-family="'DejaVu Sans', sans-serif" font-size="5.5" font-weight="700" text-anchor="middle">KNOB 3</text>
+  <!-- 5. Section 2: CONTROLS / BUTTONS Card (Y: 98 to 128) -->
+  <rect x="16" y="98" width="152" height="30" rx="3.5" fill="url(#cardGrad)" stroke="#D5CDBD" stroke-width="0.8"/>
+  <rect x="16" y="98" width="3" height="30" rx="1.5" fill="#78716C"/>
 
-  <!-- Row 2: Knobs 4, 5, 6 (Center Y: 220) -->
-  <circle cx="34" cy="220" r="18" fill="none" stroke="#27272a" stroke-dasharray="2 3" stroke-width="1"/>
-  <text x="34" y="197" fill="#e4e4e7" font-family="'DejaVu Sans', sans-serif" font-size="5.5" font-weight="700" text-anchor="middle">KNOB 4</text>
+  <!-- 3 Button Mounting Recesses (X: 40, 90, 140, Y: 111) -->
+  <rect x="30" y="102" width="20" height="18" rx="2" fill="#E5DFD4" stroke="#B8AFA0" stroke-width="0.8"/>
+  <rect x="80" y="102" width="20" height="18" rx="2" fill="#E5DFD4" stroke="#B8AFA0" stroke-width="0.8"/>
+  <rect x="130" y="102" width="20" height="18" rx="2" fill="#E5DFD4" stroke="#B8AFA0" stroke-width="0.8"/>
 
-  <circle cx="90" cy="220" r="18" fill="none" stroke="#27272a" stroke-dasharray="2 3" stroke-width="1"/>
-  <text x="90" y="197" fill="#e4e4e7" font-family="'DejaVu Sans', sans-serif" font-size="5.5" font-weight="700" text-anchor="middle">KNOB 5</text>
+  <!-- 6. Section 3: DSP KNOBS Card (Y: 134 to 276) -->
+  <rect x="16" y="134" width="152" height="142" rx="3.5" fill="url(#cardGrad)" stroke="#D5CDBD" stroke-width="0.8"/>
+  <rect x="16" y="134" width="3" height="142" rx="1.5" fill="#0E7490"/>
 
-  <circle cx="146" cy="220" r="18" fill="none" stroke="#27272a" stroke-dasharray="2 3" stroke-width="1"/>
-  <text x="146" y="197" fill="#e4e4e7" font-family="'DejaVu Sans', sans-serif" font-size="5.5" font-weight="700" text-anchor="middle">KNOB 6</text>
+  <!-- Circular background halos for 6 Knobs & LED Rings -->
+  <!-- Row 1: (34, 160), (90, 160), (146, 160) -->
+  <circle cx="34" cy="160" r="22" fill="#EBE5D8" stroke="#D8D1C2" stroke-width="0.75"/>
+  <circle cx="34" cy="160" r="13" fill="#D5CDBD" opacity="0.4"/>
 
-  <!-- 6 Field-Programmable Jacks Section (Y: 275 to 355) -->
-  <rect x="8" y="270" width="164" height="88" rx="3" fill="#09090b" stroke="#27272a" stroke-width="0.8"/>
-  <text x="90" y="282" fill="#a1a1aa" font-family="'DejaVu Sans', sans-serif" font-size="5.5" font-weight="800" letter-spacing="1.5" text-anchor="middle">FIELD PROGRAMMABLE CV</text>
+  <circle cx="90" cy="160" r="22" fill="#EBE5D8" stroke="#D8D1C2" stroke-width="0.75"/>
+  <circle cx="90" cy="160" r="13" fill="#D5CDBD" opacity="0.4"/>
 
-  <!-- Row 1 of Field Jacks: 1, 2, 3 -->
-  <g fill="#e4e4e7" font-family="'DejaVu Sans', sans-serif" font-size="5" font-weight="700" text-anchor="middle">
-    <text x="34" y="295">CV 1</text>
-    <circle cx="34" cy="309" r="10" fill="none" stroke="#d97706" stroke-width="0.75"/>
+  <circle cx="146" cy="160" r="22" fill="#EBE5D8" stroke="#D8D1C2" stroke-width="0.75"/>
+  <circle cx="146" cy="160" r="13" fill="#D5CDBD" opacity="0.4"/>
 
-    <text x="90" y="295">CV 2</text>
-    <circle cx="90" cy="309" r="10" fill="none" stroke="#d97706" stroke-width="0.75"/>
+  <!-- Row 2: (34, 220), (90, 220), (146, 220) -->
+  <circle cx="34" cy="220" r="22" fill="#EBE5D8" stroke="#D8D1C2" stroke-width="0.75"/>
+  <circle cx="34" cy="220" r="13" fill="#D5CDBD" opacity="0.4"/>
 
-    <text x="146" y="295">CV 3</text>
-    <circle cx="146" cy="309" r="10" fill="none" stroke="#d97706" stroke-width="0.75"/>
-  </g>
+  <circle cx="90" cy="220" r="22" fill="#EBE5D8" stroke="#D8D1C2" stroke-width="0.75"/>
+  <circle cx="90" cy="220" r="13" fill="#D5CDBD" opacity="0.4"/>
 
-  <!-- Row 2 of Field Jacks: 4, 5, 6 -->
-  <g fill="#e4e4e7" font-family="'DejaVu Sans', sans-serif" font-size="5" font-weight="700" text-anchor="middle">
-    <text x="34" y="333">CV 4</text>
-    <circle cx="34" cy="345" r="10" fill="none" stroke="#d97706" stroke-width="0.75"/>
+  <circle cx="146" cy="220" r="22" fill="#EBE5D8" stroke="#D8D1C2" stroke-width="0.75"/>
+  <circle cx="146" cy="220" r="13" fill="#D5CDBD" opacity="0.4"/>
 
-    <text x="90" y="333">CV 5</text>
-    <circle cx="90" cy="345" r="10" fill="none" stroke="#d97706" stroke-width="0.75"/>
+  <!-- 7. Section 4: FIELD CV JACKS Card (Y: 284 to 366) -->
+  <rect x="16" y="284" width="152" height="82" rx="3.5" fill="url(#cardGrad)" stroke="#D5CDBD" stroke-width="0.8"/>
+  <rect x="16" y="284" width="3" height="82" rx="1.5" fill="#4338CA"/>
 
-    <text x="146" y="333">CV 6</text>
-    <circle cx="146" cy="345" r="10" fill="none" stroke="#d97706" stroke-width="0.75"/>
-  </g>
+  <!-- Row 1: CV 1-3 Cyan Collar Bezels (Y: 309) -->
+  <circle cx="34" cy="309" r="10.5" fill="#E0F2FE" stroke="#0284C7" stroke-width="1.0"/>
+  <circle cx="34" cy="309" r="9" fill="#F0F9FF" stroke="#0369A1" stroke-width="0.5"/>
 
-  <!-- Footer Branding -->
-  <text x="90" y="370" fill="#52525b" font-family="'DejaVu Sans', sans-serif" font-size="4.5" letter-spacing="1.5" text-anchor="middle">DAISY SEED · 12 HP · 3U</text>
+  <circle cx="90" cy="309" r="10.5" fill="#E0F2FE" stroke="#0284C7" stroke-width="1.0"/>
+  <circle cx="90" cy="309" r="9" fill="#F0F9FF" stroke="#0369A1" stroke-width="0.5"/>
+
+  <circle cx="146" cy="309" r="10.5" fill="#E0F2FE" stroke="#0284C7" stroke-width="1.0"/>
+  <circle cx="146" cy="309" r="9" fill="#F0F9FF" stroke="#0369A1" stroke-width="0.5"/>
+
+  <!-- Row 2: CV 4-6 Violet Collar Bezels (Y: 345) -->
+  <circle cx="34" cy="345" r="10.5" fill="#EDE9FE" stroke="#7C3AED" stroke-width="1.0"/>
+  <circle cx="34" cy="345" r="9" fill="#F5F3FF" stroke="#6D28D9" stroke-width="0.5"/>
+
+  <circle cx="90" cy="345" r="10.5" fill="#EDE9FE" stroke="#7C3AED" stroke-width="1.0"/>
+  <circle cx="90" cy="345" r="9" fill="#F5F3FF" stroke="#6D28D9" stroke-width="0.5"/>
+
+  <circle cx="146" cy="345" r="10.5" fill="#EDE9FE" stroke="#7C3AED" stroke-width="1.0"/>
+  <circle cx="146" cy="345" r="9" fill="#F5F3FF" stroke="#6D28D9" stroke-width="0.5"/>
 </svg>
