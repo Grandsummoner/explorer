@@ -131,8 +131,8 @@ void ProcessSample(float inL, float inR, float& outL, float& outR, const EngineS
         ? (timeSec * 1.333f * sampleRate - flutterOffset)
         : (timeSec * sampleRate - flutterOffset);
 
-    delaySamplesL = std::clamp(delaySamplesL, 10.f, (float)(MAX_DELAY - 5));
-    delaySamplesR = std::clamp(delaySamplesR, 10.f, (float)(MAX_DELAY - 5));
+    delaySamplesL = rack::math::clamp(delaySamplesL, 10.f, (float)(MAX_DELAY - 5));
+    delaySamplesR = rack::math::clamp(delaySamplesR, 10.f, (float)(MAX_DELAY - 5));
 
     float readPosL = (float)writeIdx - delaySamplesL;
     if (readPosL < 0.f) readPosL += MAX_DELAY;
@@ -143,7 +143,7 @@ void ProcessSample(float inL, float inR, float& outL, float& outR, const EngineS
     float dlyR = readDelayCubic(delayBufR, readPosR);
 
     // 3. Gentle Damping (High-frequency air absorption)
-    float dampAlpha = std::clamp(1.0f - st.damping * 0.75f, 0.05f, 0.99f);
+    float dampAlpha = rack::math::clamp(1.0f - st.damping * 0.75f, 0.05f, 0.99f);
     dampL += dampAlpha * (dlyL - dampL);
     dampR += dampAlpha * (dlyR - dampR);
 
