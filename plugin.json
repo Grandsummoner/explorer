@@ -11,11 +11,11 @@
     {
       "slug": "Explorer",
       "name": "Explorer",
-      "description": "12 HP field-programmable DSP companion -- stereo cloud delay, lush diffusion reverb, 3-band parametric EQ, and dynamic CV field routing. Fully standalone; lights up when linked adjacent to a Spaces Command, Intel, Beams, or Stellar module on either side.",
+      "description": "12 HP field-programmable DSP companion -- stereo spatial cloud delay, diffusion reverb, octave shimmer bloom, stereo width expansion, and analog tape flutter. Fully standalone; lights up when linked adjacent to a Spaces Command, Intel, Beams, or Stellar module on either side.",
       "tags": [
-        "Equalizer",
         "Delay",
         "Reverb",
+        "Effect",
         "Dual",
         "Polyphonic"
       ]

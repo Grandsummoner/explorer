@@ -1,14 +1,14 @@
 #include "Explorer.hpp"
 
-// Custom Stellar-style button widget: square button with rounded corners and clean border
-struct ExplorerButton : ParamWidget {
+// Custom Stellar-style button widget: square button with rounded corners and latching lit color
+struct StellarButton : ParamWidget {
     Module* mod = nullptr;
     int lightId = -1;
-    NVGcolor litColor = nvgRGB(0x8A, 0x2A, 0x2A);   // Maroon accent
+    NVGcolor litColor = nvgRGB(0x8A, 0x2A, 0x2A);   // Terracotta / Maroon accent
     NVGcolor unlitColor = nvgRGB(0xED, 0xE7, 0xDC); // Stellar cream button
 
-    ExplorerButton() {
-        box.size = mm2px(Vec(4.8, 4.8));
+    StellarButton() {
+        box.size = mm2px(Vec(4.6, 4.6));
     }
 
     void onButton(const ButtonEvent& e) override {
@@ -27,12 +27,11 @@ struct ExplorerButton : ParamWidget {
     }
 
     void draw(const DrawArgs& args) override {
-        ParamQuantity* pq = getParamQuantity();
-        bool pressed = pq ? pq->getValue() > 0.5f : false;
+        bool lit = (mod && lightId >= 0) ? mod->lights[lightId].getBrightness() > 0.5f : false;
 
         nvgBeginPath(args.vg);
-        nvgRoundedRect(args.vg, 0.f, 0.f, box.size.x, box.size.y, 0.8f);
-        nvgFillColor(args.vg, pressed ? litColor : unlitColor);
+        nvgRoundedRect(args.vg, 0.f, 0.f, box.size.x, box.size.y, 0.7f);
+        nvgFillColor(args.vg, lit ? litColor : unlitColor);
         nvgFill(args.vg);
         nvgStrokeColor(args.vg, nvgRGB(0x1A, 0x18, 0x14));
         nvgStrokeWidth(args.vg, 0.8f);
@@ -41,9 +40,9 @@ struct ExplorerButton : ParamWidget {
 };
 
 // Custom Stellar-style knob widget: dark gradient with white pointer indicator
-struct ExplorerKnob : ParamWidget {
-    ExplorerKnob() {
-        box.size = mm2px(Vec(6.4, 6.4));
+struct StellarKnob : ParamWidget {
+    StellarKnob() {
+        box.size = mm2px(Vec(5.6, 5.6));
     }
 
     void onButton(const ButtonEvent& e) override {
@@ -54,9 +53,12 @@ struct ExplorerKnob : ParamWidget {
     }
 
     void onDragMove(const DragMoveEvent& e) override {
+        ParamWidget::onDragMove(e);
         ParamQuantity* pq = getParamQuantity();
         if (!pq) return;
-        float delta = -e.mouseDelta.y * 0.005f;
+        float range = pq->getMaxValue() - pq->getMinValue();
+        if (!std::isfinite(range) || range <= 0.f) range = 1.f;
+        float delta = -e.mouseDelta.y * range / 200.f;
         pq->setValue(clamp(pq->getValue() + delta, pq->getMinValue(), pq->getMaxValue()));
     }
 
@@ -96,17 +98,25 @@ struct ExplorerKnob : ParamWidget {
 };
 
 Explorer::Explorer() {
-    config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
+    config(PARAMS_LEN, INPUTS_LEN, OUTPUTS_LEN, LIGHTS_LEN);
 
-    // 6 Main Knobs
-    for (int i = 0; i < 6; i++) {
-        configParam(KNOB_1 + i, 0.0f, 1.0f, storedPreset[i], "Knob " + std::to_string(i + 1));
-    }
+    // SPACE Card (6 Knobs)
+    configParam(TIME_PARAM, 0.0f, 1.0f, 0.35f, "Delay Time");
+    configParam(FDBK_PARAM, 0.0f, 1.0f, 0.45f, "Delay Feedback");
+    configParam(DIFF_PARAM, 0.0f, 1.0f, 0.60f, "Reverb Diffusion");
+    configParam(DAMP_PARAM, 0.0f, 1.0f, 0.50f, "Damping Filter");
+    configParam(DMIX_PARAM, 0.0f, 1.0f, 0.50f, "Delay Mix");
+    configParam(RMIX_PARAM, 0.0f, 1.0f, 0.40f, "Reverb Mix");
 
-    // 3 Buttons
-    configButton(BTN_PAGE, "Page (Primary / Secondary tone)");
-    configButton(BTN_LOCK, "Lock (Parameter Motion Loop)");
-    configButton(BTN_PRESET, "Preset / Mode Select");
+    // SCULPT Card (3 Knobs)
+    configParam(WIDTH_PARAM, 0.0f, 1.0f, 0.50f, "Stereo Panorama Width");
+    configParam(COLOR_PARAM, 0.0f, 1.0f, 0.50f, "Tilt Color EQ");
+    configParam(FLUTTER_PARAM, 0.0f, 1.0f, 0.20f, "Tape Wow & Flutter");
+
+    // CTRL Card (3 Pushbuttons)
+    configButton(STEREO_PARAM, "Stereo Ping-Pong / Parallel");
+    configButton(FREEZE_PARAM, "Buffer Freeze");
+    configButton(SHIMMER_PARAM, "Octave Shimmer Bloom");
 
     // Audio Ports
     configInput(AUDIO_IN_L, "Audio In L (Mono)");
@@ -114,26 +124,19 @@ Explorer::Explorer() {
     configOutput(AUDIO_OUT_L, "Audio Out L");
     configOutput(AUDIO_OUT_R, "Audio Out R");
 
-    // 6 Field-Programmable Jacks
-    for (int i = 0; i < 6; i++) {
-        configInput(FIELD_IN_1 + i, "Field Jack " + std::to_string(i + 1) + " (CV In)");
-        configOutput(FIELD_OUT_1 + i, "Field Jack " + std::to_string(i + 1) + " (CV Out)");
-    }
+    // FIELD Card (6 CV Inputs)
+    configInput(TIME_CV_INPUT, "Time CV");
+    configInput(FDBK_CV_INPUT, "Feedback CV");
+    configInput(DIFF_CV_INPUT, "Diffusion CV");
+    configInput(RMIX_CV_INPUT, "Reverb Mix CV");
+    configInput(WIDTH_CV_INPUT, "Width CV");
+    configInput(FLUTTER_CV_INPUT, "Flutter CV");
 
-    hw.Init(48000.0f);
-    stereo_eq::Init(48000.0f);
-    cloud_delay::Init(48000.0f);
+    explorer_dsp::Init(48000.f);
 }
 
 void Explorer::process(const ProcessArgs& args) {
-    if (hw.sample_rate != args.sampleRate) {
-        hw.sample_rate = args.sampleRate;
-        stereo_eq::Init(args.sampleRate);
-        cloud_delay::Init(args.sampleRate);
-    }
-
-    // Adjacency detection matching Stellar's exact family integration
-    // The link lights only turn on if placed next to a family module (left, right, or both)
+    // 1. Companion Adjacency Light Detection
     auto isFamily = [](Module* m) -> bool {
         if (!m || !m->model || !m->model->plugin) return false;
         const std::string& pslug = m->model->plugin->slug;
@@ -142,7 +145,8 @@ void Explorer::process(const ProcessArgs& args) {
                 pslug == "Intel" || mslug == "Intel" ||
                 pslug == "Beams" || mslug == "Beams" ||
                 pslug == "Stellar" || mslug == "Stellar" ||
-                pslug == "HermeticModular" || mslug == "Explorer");
+                pslug == "Explorer" || mslug == "Explorer" ||
+                pslug == "HermeticModular");
     };
 
     bool linkedLeft = isFamily(leftExpander.module);
@@ -150,84 +154,82 @@ void Explorer::process(const ProcessArgs& args) {
     lights[LINK_LEFT_LIGHT].setBrightness(linkedLeft ? 1.0f : 0.0f);
     lights[LINK_RIGHT_LIGHT].setBrightness(linkedRight ? 1.0f : 0.0f);
 
-    // 1. Read Knobs with Pot Catch
-    for (int i = 0; i < 6; i++) {
-        float paramVal = params[KNOB_1 + i].getValue();
-        if (!isCaught[i]) {
-            if (std::abs(paramVal - storedPreset[i]) < 0.04f) {
-                isCaught[i] = true;
-            }
-        }
-        if (isCaught[i]) {
-            hw.knobs[i] = paramVal;
-        }
+    // 2. Latching Button Triggers
+    if (stereoTrigger.process(params[STEREO_PARAM].getValue() > 0.5f)) {
+        isStereo = !isStereo;
+    }
+    if (freezeTrigger.process(params[FREEZE_PARAM].getValue() > 0.5f)) {
+        isFrozen = !isFrozen;
+    }
+    if (shimmerTrigger.process(params[SHIMMER_PARAM].getValue() > 0.5f)) {
+        isShimmer = !isShimmer;
     }
 
-    // 2. Read Buttons
-    for (int i = 0; i < 3; i++) {
-        hw.buttons[i] = params[BTN_PAGE + i].getValue() > 0.5f;
-    }
+    lights[STEREO_LIGHT].setBrightness(isStereo ? 1.0f : 0.0f);
+    lights[FREEZE_LIGHT].setBrightness(isFrozen ? 1.0f : 0.0f);
+    lights[SHIMMER_LIGHT].setBrightness(isShimmer ? 1.0f : 0.0f);
 
-    // Toggle mode on Preset button edge
-    if (params[BTN_PRESET].getValue() > 0.5f) {
-        activeMode = (activeMode == 0) ? 1 : 0;
-    }
+    // 3. Read Knobs + CV Modulation
+    auto getCv = [&](int cvInputId) -> float {
+        return inputs[cvInputId].isConnected() ? (inputs[cvInputId].getVoltage() / 5.0f) : 0.0f;
+    };
 
-    // 3. Audio Block Buffer Accumulator
-    if (blockIdx >= BLOCK_SIZE) {
-        float* inBuffers[2] = {blockInL, blockInR};
-        float* outBuffers[2] = {blockOutL, blockOutR};
+    dspState.time = clamp(params[TIME_PARAM].getValue() + getCv(TIME_CV_INPUT), 0.0f, 1.0f);
+    dspState.feedback = clamp(params[FDBK_PARAM].getValue() + getCv(FDBK_CV_INPUT), 0.0f, 1.0f);
+    dspState.diffusion = clamp(params[DIFF_PARAM].getValue() + getCv(DIFF_CV_INPUT), 0.0f, 1.0f);
+    dspState.damping = clamp(params[DAMP_PARAM].getValue(), 0.0f, 1.0f);
+    dspState.delayMix = clamp(params[DMIX_PARAM].getValue(), 0.0f, 1.0f);
+    dspState.reverbMix = clamp(params[RMIX_PARAM].getValue() + getCv(RMIX_CV_INPUT), 0.0f, 1.0f);
 
-        if (activeMode == 0) {
-            cloud_delay::ProcessBlock(inBuffers, outBuffers, BLOCK_SIZE, hw);
-        } else {
-            stereo_eq::ProcessBlock(inBuffers, outBuffers, BLOCK_SIZE, hw);
-        }
+    dspState.width = clamp(params[WIDTH_PARAM].getValue() + getCv(WIDTH_CV_INPUT), 0.0f, 1.0f);
+    dspState.color = clamp(params[COLOR_PARAM].getValue(), 0.0f, 1.0f);
+    dspState.flutter = clamp(params[FLUTTER_PARAM].getValue() + getCv(FLUTTER_CV_INPUT), 0.0f, 1.0f);
 
-        blockIdx = 0;
-    }
+    dspState.stereoPingPong = isStereo;
+    dspState.freeze = isFrozen;
+    dspState.shimmer = isShimmer;
 
-    // Sample-by-sample audio transfer
-    blockInL[blockIdx] = inputs[AUDIO_IN_L].getVoltage() / 5.0f;
-    blockInR[blockIdx] = inputs[AUDIO_IN_R].isConnected()
-        ? inputs[AUDIO_IN_R].getVoltage() / 5.0f
-        : blockInL[blockIdx];
+    // 4. Audio Processing (Mono-to-Stereo Normaling on IN L)
+    float inL = inputs[AUDIO_IN_L].getVoltage() / 5.0f;
+    float inR = inputs[AUDIO_IN_R].isConnected() ? (inputs[AUDIO_IN_R].getVoltage() / 5.0f) : inL;
 
-    outputs[AUDIO_OUT_L].setVoltage(clamp(blockOutL[blockIdx] * 5.0f, -10.0f, 10.0f));
-    outputs[AUDIO_OUT_R].setVoltage(clamp(blockOutR[blockIdx] * 5.0f, -10.0f, 10.0f));
+    float outL = 0.f, outR = 0.f;
+    explorer_dsp::ProcessSample(inL, inR, outL, outR, dspState, args.sampleRate);
 
-    // CV Field Jacks
-    for (int i = 0; i < 6; i++) {
-        if (hw.field_jack_mode[i] == hermetic::JACK_MODE_OUT) {
-            outputs[FIELD_OUT_1 + i].setVoltage(hw.field_cv_out[i] * 5.0f);
-        }
-    }
-
-    blockIdx++;
+    // Scaled output to Eurorack standard ±5V
+    outputs[AUDIO_OUT_L].setVoltage(clamp(outL * 5.0f, -10.0f, 10.0f));
+    outputs[AUDIO_OUT_R].setVoltage(clamp(outR * 5.0f, -10.0f, 10.0f));
 }
 
 json_t* Explorer::dataToJson() {
     json_t* rootJ = json_object();
-    json_object_set_new(rootJ, "activeMode", json_integer(activeMode));
+    json_object_set_new(rootJ, "isStereo", json_boolean(isStereo));
+    json_object_set_new(rootJ, "isFrozen", json_boolean(isFrozen));
+    json_object_set_new(rootJ, "isShimmer", json_boolean(isShimmer));
+    json_object_set_new(rootJ, "delayRangeMode", json_integer(dspState.delayRangeMode));
     return rootJ;
 }
 
 void Explorer::dataFromJson(json_t* rootJ) {
-    json_t* modeJ = json_object_get(rootJ, "activeMode");
-    if (modeJ) {
-        activeMode = json_integer_value(modeJ);
-    }
+    json_t* stJ = json_object_get(rootJ, "isStereo");
+    if (stJ) isStereo = json_boolean_value(stJ);
+
+    json_t* frJ = json_object_get(rootJ, "isFrozen");
+    if (frJ) isFrozen = json_boolean_value(frJ);
+
+    json_t* shJ = json_object_get(rootJ, "isShimmer");
+    if (shJ) isShimmer = json_boolean_value(shJ);
+
+    json_t* rgJ = json_object_get(rootJ, "delayRangeMode");
+    if (rgJ) dspState.delayRangeMode = json_integer_value(rgJ);
 }
 
 // Module Widget UI
 struct ExplorerWidget : ModuleWidget {
     ExplorerWidget(Explorer* module) {
         setModule(module);
-
-        // Automatically size from panel SVG (exactly matching Stellar convention)
         setPanel(createPanel(asset::plugin(pluginInstance, "res/Explorer.svg")));
 
-        // Helper lambdas for positioning in exact mm coordinates
         auto inPort = [&](float x, float y, int id) {
             addInput(createInputCentered<PJ301MPort>(mm2px(Vec(x, y)), module, id));
         };
@@ -235,55 +237,87 @@ struct ExplorerWidget : ModuleWidget {
             addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(x, y)), module, id));
         };
 
-        // 1. Audio I/O Jacks (Row 1): IN L, IN R, OUT L, OUT R (y = 17.50 mm)
-        inPort(14.00f, 17.50f, Explorer::AUDIO_IN_L);
-        inPort(26.65f, 17.50f, Explorer::AUDIO_IN_R);
-        outPort(39.31f, 17.50f, Explorer::AUDIO_OUT_L);
-        outPort(51.96f, 17.50f, Explorer::AUDIO_OUT_R);
+        // 1. Audio I/O Jacks (Row 1): IN L, IN R, OUT L, OUT R (y = 17.4 mm)
+        inPort(15.57f, 17.4f, Explorer::AUDIO_IN_L);
+        inPort(27.11f, 17.4f, Explorer::AUDIO_IN_R);
+        outPort(38.65f, 17.4f, Explorer::AUDIO_OUT_L);
+        outPort(50.19f, 17.4f, Explorer::AUDIO_OUT_R);
 
-        // 2. Control Buttons (Row 2): PAGE, LOCK, MODE (y = 33.90 mm)
+        // 2. Control Buttons (Row 2): STEREO, FREEZE, SHIMMER (y = 32.2 mm)
         {
-            auto* btnPage = createParamCentered<ExplorerButton>(mm2px(Vec(16.50f, 33.90f)), module, Explorer::BTN_PAGE);
-            btnPage->mod = module;
-            addParam(btnPage);
+            auto addBtn = [&](float x, float y, int paramId, int lightId, NVGcolor litCol) {
+                auto* btn = createParamCentered<StellarButton>(mm2px(Vec(x, y)), module, paramId);
+                btn->mod = module;
+                btn->lightId = lightId;
+                btn->litColor = litCol;
+                addParam(btn);
+            };
 
-            auto* btnLock = createParamCentered<ExplorerButton>(mm2px(Vec(32.98f, 33.90f)), module, Explorer::BTN_LOCK);
-            btnLock->mod = module;
-            addParam(btnLock);
-
-            auto* btnMode = createParamCentered<ExplorerButton>(mm2px(Vec(49.46f, 33.90f)), module, Explorer::BTN_PRESET);
-            btnMode->mod = module;
-            addParam(btnMode);
+            addBtn(17.49f, 32.2f, Explorer::STEREO_PARAM, Explorer::STEREO_LIGHT, nvgRGB(0x8A, 0x64, 0x23));  // Brass
+            addBtn(32.88f, 32.2f, Explorer::FREEZE_PARAM, Explorer::FREEZE_LIGHT, nvgRGB(0x8A, 0x2A, 0x2A));  // Terracotta / Maroon
+            addBtn(48.27f, 32.2f, Explorer::SHIMMER_PARAM, Explorer::SHIMMER_LIGHT, nvgRGB(0x8A, 0x64, 0x23)); // Brass
         }
 
-        // 3. DSP Knobs: 6 Knobs without LED rings (exactly matching Stellar)
-        // Sub-row 1 (TIME, FDBK, DIFF) at y = 52.30 mm
-        addParam(createParamCentered<ExplorerKnob>(mm2px(Vec(15.50f, 52.30f)), module, Explorer::KNOB_1));
-        addParam(createParamCentered<ExplorerKnob>(mm2px(Vec(32.98f, 52.30f)), module, Explorer::KNOB_2));
-        addParam(createParamCentered<ExplorerKnob>(mm2px(Vec(50.46f, 52.30f)), module, Explorer::KNOB_3));
+        // 3. SPACE Card: 6 Knobs
+        // Row 1 (y = 48.0 mm): TIME, FDBK, DIFF
+        addParam(createParamCentered<StellarKnob>(mm2px(Vec(17.49f, 48.0f)), module, Explorer::TIME_PARAM));
+        addParam(createParamCentered<StellarKnob>(mm2px(Vec(32.88f, 48.0f)), module, Explorer::FDBK_PARAM));
+        addParam(createParamCentered<StellarKnob>(mm2px(Vec(48.27f, 48.0f)), module, Explorer::DIFF_PARAM));
 
-        // Sub-row 2 (TONE, MOD, MIX) at y = 68.30 mm
-        addParam(createParamCentered<ExplorerKnob>(mm2px(Vec(15.50f, 68.30f)), module, Explorer::KNOB_4));
-        addParam(createParamCentered<ExplorerKnob>(mm2px(Vec(32.98f, 68.30f)), module, Explorer::KNOB_5));
-        addParam(createParamCentered<ExplorerKnob>(mm2px(Vec(50.46f, 68.30f)), module, Explorer::KNOB_6));
+        // Row 2 (y = 64.0 mm): DAMP, D-MIX, R-MIX
+        addParam(createParamCentered<StellarKnob>(mm2px(Vec(17.49f, 64.0f)), module, Explorer::DAMP_PARAM));
+        addParam(createParamCentered<StellarKnob>(mm2px(Vec(32.88f, 64.0f)), module, Explorer::DMIX_PARAM));
+        addParam(createParamCentered<StellarKnob>(mm2px(Vec(48.27f, 64.0f)), module, Explorer::RMIX_PARAM));
 
-        // 4. Field CV Jacks: 6 CV Ports with 17mm vertical row spacing (completely legible!)
-        // Sub-row 1 (CV 1, CV 2, CV 3) at y = 91.70 mm
-        inPort(15.50f, 91.70f, Explorer::FIELD_IN_1);
-        inPort(32.98f, 91.70f, Explorer::FIELD_IN_1 + 1);
-        inPort(50.46f, 91.70f, Explorer::FIELD_IN_1 + 2);
+        // 4. SCULPT Card: 3 Knobs (y = 82.4 mm): WIDTH, COLOR, FLUTTER
+        addParam(createParamCentered<StellarKnob>(mm2px(Vec(17.49f, 82.4f)), module, Explorer::WIDTH_PARAM));
+        addParam(createParamCentered<StellarKnob>(mm2px(Vec(32.88f, 82.4f)), module, Explorer::COLOR_PARAM));
+        addParam(createParamCentered<StellarKnob>(mm2px(Vec(48.27f, 82.4f)), module, Explorer::FLUTTER_PARAM));
 
-        // Sub-row 2 (CV 4, CV 5, CV 6) at y = 108.70 mm
-        inPort(15.50f, 108.70f, Explorer::FIELD_IN_1 + 3);
-        inPort(32.98f, 108.70f, Explorer::FIELD_IN_1 + 4);
-        inPort(50.46f, 108.70f, Explorer::FIELD_IN_1 + 5);
+        // 5. FIELD Card: 6 CV Jacks
+        // Row 1 (y = 100.6 mm): TIME CV, FDBK CV, DIFF CV
+        inPort(17.49f, 100.6f, Explorer::TIME_CV_INPUT);
+        inPort(32.88f, 100.6f, Explorer::FDBK_CV_INPUT);
+        inPort(48.27f, 100.6f, Explorer::DIFF_CV_INPUT);
 
-        // 5. Corner Status/Link Lights (Matching Stellar's small blue link lights)
-        // Only illuminate when adjacent to family modules
+        // Row 2 (y = 114.2 mm): R-MIX CV, WIDTH CV, FLUTTER CV
+        inPort(17.49f, 114.2f, Explorer::RMIX_CV_INPUT);
+        inPort(32.88f, 114.2f, Explorer::WIDTH_CV_INPUT);
+        inPort(48.27f, 114.2f, Explorer::FLUTTER_CV_INPUT);
+
+        // 6. Corner Adjacency Status Lights
         addChild(createLightCentered<SmallLight<BlueLight>>(mm2px(Vec(5.00f, 5.00f)), module, Explorer::LINK_LEFT_LIGHT));
         addChild(createLightCentered<SmallLight<BlueLight>>(mm2px(Vec(55.96f, 5.00f)), module, Explorer::LINK_RIGHT_LIGHT));
+    }
 
-        // Notice: NO Screws added! Exactly like Stellar, eliminating any protrusion outside the side panel!
+    void appendContextMenu(Menu* menu) override {
+        Explorer* explorer = dynamic_cast<Explorer*>(module);
+        if (!explorer) return;
+
+        menu->addChild(new MenuSeparator);
+        menu->addChild(createMenuLabel("Explorer Settings"));
+
+        struct RangeItem : MenuItem {
+            Explorer* explorer;
+            int mode;
+            void onAction(const event::Action& e) override {
+                explorer->dspState.delayRangeMode = mode;
+            }
+        };
+
+        auto* itemNormal = new RangeItem;
+        itemNormal->text = "Delay Range: Normal (50ms - 1.5s)";
+        itemNormal->rightText = (explorer->dspState.delayRangeMode == 0) ? "✔" : "";
+        itemNormal->explorer = explorer;
+        itemNormal->mode = 0;
+        menu->addChild(itemNormal);
+
+        auto* itemDeep = new RangeItem;
+        itemDeep->text = "Delay Range: Deep Space (up to 4.0s)";
+        itemDeep->rightText = (explorer->dspState.delayRangeMode == 1) ? "✔" : "";
+        itemDeep->explorer = explorer;
+        itemDeep->mode = 1;
+        menu->addChild(itemDeep);
     }
 };
 

@@ -1,137 +1,223 @@
 /**
  * cloud_delay.cpp
- * Hermetic Modular reference DSP firmware: Stereo Ping-Pong Delay & Lush Diffusion Reverb.
- * Compile-ready for both VCV Rack and Daisy hardware.
- * 
- * License: MIT
+ * Explorer: Pristine, Hi-Fi Spatial Cloud Delay & Reverb with Stereo Width & Shimmer.
+ * Zero distortion / zero overdrive.
  */
 
-#include "VirtualAlchemyHAL.h"
+#include "Explorer.hpp"
 #include <cmath>
-#include <vector>
+#include <cstring>
+#include <algorithm>
 
-namespace cloud_delay {
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
-static constexpr size_t MAX_DELAY_SAMPLES = 96000; // 2 seconds @ 48kHz
-static float delayBufferL[MAX_DELAY_SAMPLES] = {};
-static float delayBufferR[MAX_DELAY_SAMPLES] = {};
-static size_t writeIdxL = 0;
-static size_t writeIdxR = 0;
+namespace explorer_dsp {
 
-// Filter state for damping
-static float dampFilterL = 0.0f;
-static float dampFilterR = 0.0f;
+static constexpr size_t MAX_DELAY = 192000; // 4.0 seconds @ 48kHz
+static float delayBufL[MAX_DELAY] = {};
+static float delayBufR[MAX_DELAY] = {};
+static size_t writeIdx = 0;
 
-// Simple all-pass diffuser network for reverb bloom
-struct AllpassFilter {
-    float buffer[4096] = {};
+// Reverb allpass diffusers
+struct Allpass {
+    float buf[4096] = {};
     size_t idx = 0;
     size_t size = 1000;
-    float feedback = 0.5f;
+    float fb = 0.55f;
 
-    void SetSize(size_t s, float fb = 0.6f) {
+    void setSize(size_t s, float f = 0.55f) {
         size = (s < 4096) ? s : 4095;
-        feedback = fb;
+        fb = f;
     }
 
-    float Process(float in) {
-        float bufOut = buffer[idx];
-        float out = -in + bufOut;
-        buffer[idx] = in + (bufOut * feedback);
+    float process(float in) {
+        float out = buf[idx];
+        buf[idx] = in + out * fb;
         idx = (idx + 1) % size;
-        return out;
+        return -in + out;
     }
 };
 
-static AllpassFilter diffusersL[4];
-static AllpassFilter diffusersR[4];
+static Allpass diffL[4];
+static Allpass diffR[4];
+
+// One-pole damping filters
+static float dampL = 0.f;
+static float dampR = 0.f;
+
+// Flutter LFO phases
+static float lfoPhase1 = 0.f;
+static float lfoPhase2 = 0.f;
+
+// Octave Shimmer pitch-shifter buffers (grain pitch shift +12 semitones)
+static constexpr size_t SHIMMER_BUF = 4096;
+static float shimBufL[SHIMMER_BUF] = {};
+static float shimBufR[SHIMMER_BUF] = {};
+static size_t shimWrite = 0;
+static float shimRead = 0.f;
+
+// Tilt EQ one-pole state
+static float tiltStateL = 0.f;
+static float tiltStateR = 0.f;
 
 void Init(float sampleRate) {
     (void)sampleRate;
-    std::memset(delayBufferL, 0, sizeof(delayBufferL));
-    std::memset(delayBufferR, 0, sizeof(delayBufferR));
-    writeIdxL = 0;
-    writeIdxR = 0;
-    dampFilterL = 0.0f;
-    dampFilterR = 0.0f;
+    std::memset(delayBufL, 0, sizeof(delayBufL));
+    std::memset(delayBufR, 0, sizeof(delayBufR));
+    std::memset(shimBufL, 0, sizeof(shimBufL));
+    std::memset(shimBufR, 0, sizeof(shimBufR));
+    writeIdx = 0;
+    dampL = dampR = 0.f;
+    lfoPhase1 = lfoPhase2 = 0.f;
+    shimWrite = 0;
+    shimRead = 0.f;
+    tiltStateL = tiltStateR = 0.f;
 
-    // Prime numbers for natural non-metallic diffusion
-    diffusersL[0].SetSize(223, 0.65f);
-    diffusersL[1].SetSize(563, 0.62f);
-    diffusersL[2].SetSize(1151, 0.58f);
-    diffusersL[3].SetSize(1787, 0.55f);
+    // Mutually prime delays for dense, non-metallic spatial diffusion
+    diffL[0].setSize(251, 0.60f);
+    diffL[1].setSize(641, 0.58f);
+    diffL[2].setSize(1237, 0.55f);
+    diffL[3].setSize(1987, 0.52f);
 
-    diffusersR[0].SetSize(239, 0.65f);
-    diffusersR[1].SetSize(547, 0.62f);
-    diffusersR[2].SetSize(1187, 0.58f);
-    diffusersR[3].SetSize(1753, 0.55f);
+    diffR[0].setSize(269, 0.60f);
+    diffR[1].setSize(619, 0.58f);
+    diffR[2].setSize(1279, 0.55f);
+    diffR[3].setSize(1933, 0.52f);
 }
 
-void ProcessBlock(float** in, float** out, size_t size, hermetic::AlchemyHardware& hw) {
-    float delayTimeSec = 0.06f + std::pow(hw.GetKnobValue(0), 1.5f) * 1.1f;
-    float feedback = std::min(0.93f, hw.GetKnobValue(1) * 0.95f);
-    float delayMix = hw.GetKnobValue(2);
-    float reverbSize = hw.GetKnobValue(3);
-    float damping = 0.2f + hw.GetKnobValue(4) * 0.75f;
-    float reverbMix = hw.GetKnobValue(5);
+// Hermite cubic interpolation for silky smooth tape-speed transitions
+static inline float readDelayCubic(const float* buffer, float readPos) {
+    int iPos = static_cast<int>(readPos);
+    float frac = readPos - iPos;
 
-    size_t delaySamplesL = static_cast<size_t>(delayTimeSec * hw.sample_rate);
-    size_t delaySamplesR = static_cast<size_t>(delayTimeSec * 1.38f * hw.sample_rate);
-    if (delaySamplesL >= MAX_DELAY_SAMPLES) delaySamplesL = MAX_DELAY_SAMPLES - 1;
-    if (delaySamplesR >= MAX_DELAY_SAMPLES) delaySamplesR = MAX_DELAY_SAMPLES - 1;
+    int idx0 = (iPos - 1 + MAX_DELAY) % MAX_DELAY;
+    int idx1 = (iPos + MAX_DELAY) % MAX_DELAY;
+    int idx2 = (iPos + 1 + MAX_DELAY) % MAX_DELAY;
+    int idx3 = (iPos + 2 + MAX_DELAY) % MAX_DELAY;
 
-    // Update LED rings: Cyan for Delay, Purple for Reverb
-    hw.SetKnobRingArc(0, hw.GetKnobValue(0), 6, 182, 212);
-    hw.SetKnobRingArc(1, hw.GetKnobValue(1), 6, 182, 212);
-    hw.SetKnobRingArc(2, hw.GetKnobValue(2), 6, 182, 212);
-    hw.SetKnobRingArc(3, hw.GetKnobValue(3), 217, 70, 239);
-    hw.SetKnobRingArc(4, hw.GetKnobValue(4), 217, 70, 239);
-    hw.SetKnobRingArc(5, hw.GetKnobValue(5), 217, 70, 239);
+    float y0 = buffer[idx0];
+    float y1 = buffer[idx1];
+    float y2 = buffer[idx2];
+    float y3 = buffer[idx3];
 
-    for (size_t i = 0; i < size; i++) {
-        float inL = in[0][i];
-        float inR = in[1][i];
+    float c0 = y1;
+    float c1 = 0.5f * (y2 - y0);
+    float c2 = y0 - 2.5f * y1 + 2.0f * y2 - 0.5f * y3;
+    float c3 = 0.5f * (y3 - y0) + 1.5f * (y1 - y2);
 
-        // Read delay outputs
-        size_t readIdxL = (writeIdxL + MAX_DELAY_SAMPLES - delaySamplesL) % MAX_DELAY_SAMPLES;
-        size_t readIdxR = (writeIdxR + MAX_DELAY_SAMPLES - delaySamplesR) % MAX_DELAY_SAMPLES;
-        float delayedL = delayBufferL[readIdxL];
-        float delayedR = delayBufferR[readIdxR];
+    return ((c3 * frac + c2) * frac + c1) * frac + c0;
+}
 
-        // Cross-feedback ping-pong with damping
-        dampFilterL += damping * (delayedR - dampFilterL);
-        dampFilterR += damping * (delayedL - dampFilterR);
+void ProcessSample(float inL, float inR, float& outL, float& outR, const EngineState& st, float sampleRate) {
+    if (sampleRate <= 0.f) sampleRate = 48000.f;
 
-        delayBufferL[writeIdxL] = inL + dampFilterL * feedback;
-        delayBufferR[writeIdxR] = inR + dampFilterR * feedback;
+    // 1. Wow & Flutter tape modulation (pure subtle pitch drift, zero distortion)
+    float lfo1 = std::sin(lfoPhase1);
+    float lfo2 = std::sin(lfoPhase2);
+    lfoPhase1 += 2.0f * (float)M_PI * 0.65f / sampleRate;
+    lfoPhase2 += 2.0f * (float)M_PI * 2.15f / sampleRate;
+    if (lfoPhase1 > 2.0f * (float)M_PI) lfoPhase1 -= 2.0f * (float)M_PI;
+    if (lfoPhase2 > 2.0f * (float)M_PI) lfoPhase2 -= 2.0f * (float)M_PI;
 
-        writeIdxL = (writeIdxL + 1) % MAX_DELAY_SAMPLES;
-        writeIdxR = (writeIdxR + 1) % MAX_DELAY_SAMPLES;
+    float flutterOffset = (lfo1 * 0.7f + lfo2 * 0.3f) * (st.flutter * 0.0035f * sampleRate);
 
-        // Diffusion reverb stage with normalized send
-        float revSendL = (inL * 0.5f + delayedL * 0.5f) * reverbSize;
-        float revSendR = (inR * 0.5f + delayedR * 0.5f) * reverbSize;
-        float verbL = revSendL;
-        float verbR = revSendR;
-        for (int d = 0; d < 4; d++) {
-            verbL = diffusersL[d].Process(verbL);
-            verbR = diffusersR[d].Process(verbR);
-        }
+    // 2. Delay Time Mapping (Normal: 0.05s to 1.5s; Deep: up to 4.0s)
+    float maxSec = (st.delayRangeMode == 1) ? 3.9f : 1.45f;
+    float timeSec = 0.05f + std::pow(st.time, 1.6f) * maxSec;
+    float delaySamplesL = timeSec * sampleRate + flutterOffset;
+    float delaySamplesR = st.stereoPingPong 
+        ? (timeSec * 1.333f * sampleRate - flutterOffset)
+        : (timeSec * sampleRate - flutterOffset);
 
-        // Balanced dry/wet gain staging calibrated for unity (0 dB) output
-        float dryAmount = 1.0f - delayMix * 0.5f;
-        float delayWetAmount = delayMix * 0.6f;
-        float delayMixedL = inL * dryAmount + delayedL * delayWetAmount;
-        float delayMixedR = inR * dryAmount + delayedR * delayWetAmount;
+    delaySamplesL = std::clamp(delaySamplesL, 10.f, (float)(MAX_DELAY - 5));
+    delaySamplesR = std::clamp(delaySamplesR, 10.f, (float)(MAX_DELAY - 5));
 
-        // Reverb blend
-        float finalL = delayMixedL * (1.0f - reverbMix * 0.35f) + verbL * (reverbMix * 0.5f);
-        float finalR = delayMixedR * (1.0f - reverbMix * 0.35f) + verbR * (reverbMix * 0.5f);
+    float readPosL = (float)writeIdx - delaySamplesL;
+    if (readPosL < 0.f) readPosL += MAX_DELAY;
+    float readPosR = (float)writeIdx - delaySamplesR;
+    if (readPosR < 0.f) readPosR += MAX_DELAY;
 
-        // Musical soft limiter to prevent clipping and keep output strictly within Eurorack limits
-        out[0][i] = std::tanh(finalL);
-        out[1][i] = std::tanh(finalR);
+    float dlyL = readDelayCubic(delayBufL, readPosL);
+    float dlyR = readDelayCubic(delayBufR, readPosR);
+
+    // 3. Gentle Damping (High-frequency air absorption)
+    float dampAlpha = std::clamp(1.0f - st.damping * 0.75f, 0.05f, 0.99f);
+    dampL += dampAlpha * (dlyL - dampL);
+    dampR += dampAlpha * (dlyR - dampR);
+
+    // 4. Freeze & Feedback Loop
+    float inGain = st.freeze ? 0.0f : 1.0f;
+    float fb = st.freeze ? 1.0f : std::min(0.96f, st.feedback * 0.98f);
+
+    if (st.stereoPingPong) {
+        // Cross-feedback ping-pong
+        delayBufL[writeIdx] = inL * inGain + dampR * fb;
+        delayBufR[writeIdx] = inR * inGain + dampL * fb;
+    } else {
+        // Dual parallel delay
+        delayBufL[writeIdx] = inL * inGain + dampL * fb;
+        delayBufR[writeIdx] = inR * inGain + dampR * fb;
     }
+
+    // 5. Octave Shimmer Generator (clean granular 2x playback pitch shift)
+    shimBufL[shimWrite] = inL * 0.4f + dampL * 0.6f;
+    shimBufR[shimWrite] = inR * 0.4f + dampR * 0.6f;
+    shimWrite = (shimWrite + 1) % SHIMMER_BUF;
+
+    shimRead += 2.0f; // 2x speed for +1 octave
+    if (shimRead >= (float)SHIMMER_BUF) shimRead -= (float)SHIMMER_BUF;
+    float shimL = shimBufL[static_cast<size_t>(shimRead) % SHIMMER_BUF];
+    float shimR = shimBufR[static_cast<size_t>(shimRead) % SHIMMER_BUF];
+
+    // 6. 4-Stage Diffusion Reverb Network
+    float revInL = (inL * 0.4f + dlyL * st.delayMix * 0.6f) * st.diffusion;
+    float revInR = (inR * 0.4f + dlyR * st.delayMix * 0.6f) * st.diffusion;
+    if (st.shimmer) {
+        revInL += shimL * 0.45f;
+        revInR += shimR * 0.45f;
+    }
+
+    float vL = revInL;
+    float vR = revInR;
+    for (int d = 0; d < 4; d++) {
+        vL = diffL[d].process(vL);
+        vR = diffR[d].process(vR);
+    }
+
+    // 7. Space Bus Mixing (Calibrated 0 dB unity gain)
+    float dryGain = 1.0f - st.delayMix * 0.45f;
+    float dlyGain = st.delayMix * 0.55f;
+    float revGain = st.reverbMix * 0.50f;
+
+    float mixedL = inL * dryGain + dlyL * dlyGain + vL * revGain;
+    float mixedR = inR * dryGain + dlyR * dlyGain + vR * revGain;
+
+    // 8. SCULPT: Pristine Gentle Tilt EQ (Color)
+    // Low-pass one-pole filter at ~850 Hz
+    float tiltFreqAlpha = 0.09f;
+    tiltStateL += tiltFreqAlpha * (mixedL - tiltStateL);
+    tiltStateR += tiltFreqAlpha * (mixedR - tiltStateR);
+
+    // Color: 0.0 = warm dark bass, 0.5 = flat, 1.0 = crystalline airy high sheen
+    float tiltOffset = (st.color - 0.5f) * 1.5f;
+    float highComponentL = mixedL - tiltStateL;
+    float highComponentR = mixedR - tiltStateR;
+
+    float sculptedL = mixedL + highComponentL * tiltOffset - tiltStateL * (tiltOffset * 0.5f);
+    float sculptedR = mixedR + highComponentR * tiltOffset - tiltStateR * (tiltOffset * 0.5f);
+
+    // 9. SCULPT: Mid/Side Stereo Panorama Expander (Width)
+    float mid = (sculptedL + sculptedR) * 0.5f;
+    float side = (sculptedL - sculptedR) * 0.5f;
+    float widthFactor = st.width * 2.0f; // 0.0 = mono, 1.0 = normal stereo, 2.0 = ultra-wide
+
+    outL = mid + side * widthFactor;
+    outR = mid - side * widthFactor;
+
+    // Advance circular delay index
+    writeIdx = (writeIdx + 1) % MAX_DELAY;
 }
 
-} // namespace cloud_delay
+} // namespace explorer_dsp

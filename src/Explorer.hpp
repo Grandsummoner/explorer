@@ -1,71 +1,102 @@
 #pragma once
 #include "plugin.hpp"
-#include "VirtualAlchemyHAL.h"
+#include <vector>
+#include <cmath>
 
-namespace stereo_eq {
-    void Init(float sampleRate);
-    void ProcessBlock(float** in, float** out, size_t size, hermetic::AlchemyHardware& hw);
-}
+namespace explorer_dsp {
+    struct EngineState {
+        // Space parameters (Engine 1)
+        float time = 0.35f;
+        float feedback = 0.45f;
+        float diffusion = 0.60f;
+        float damping = 0.50f;
+        float delayMix = 0.50f;
+        float reverbMix = 0.40f;
 
-namespace cloud_delay {
+        // Sculpt parameters (Engine 2)
+        float width = 0.50f;
+        float color = 0.50f;
+        float flutter = 0.20f;
+
+        // Latching toggles
+        bool stereoPingPong = true;
+        bool freeze = false;
+        bool shimmer = false;
+
+        // Context menu options
+        int delayRangeMode = 0; // 0 = Normal (50ms - 1.5s), 1 = Deep Space (up to 4.0s)
+    };
+
     void Init(float sampleRate);
-    void ProcessBlock(float** in, float** out, size_t size, hermetic::AlchemyHardware& hw);
+    void ProcessSample(float inL, float inR, float& outL, float& outR, const EngineState& st, float sampleRate);
 }
 
 struct Explorer : Module {
     enum ParamIds {
-        KNOB_1,
-        KNOB_2,
-        KNOB_3,
-        KNOB_4,
-        KNOB_5,
-        KNOB_6,
-        BTN_PAGE,
-        BTN_LOCK,
-        BTN_PRESET,
-        NUM_PARAMS
+        // SPACE card (6 Knobs)
+        TIME_PARAM,
+        FDBK_PARAM,
+        DIFF_PARAM,
+        DAMP_PARAM,
+        DMIX_PARAM,
+        RMIX_PARAM,
+
+        // SCULPT card (3 Knobs)
+        WIDTH_PARAM,
+        COLOR_PARAM,
+        FLUTTER_PARAM,
+
+        // CTRL card (3 Pushbuttons)
+        STEREO_PARAM,
+        FREEZE_PARAM,
+        SHIMMER_PARAM,
+
+        PARAMS_LEN
     };
+
     enum InputIds {
         AUDIO_IN_L,
         AUDIO_IN_R,
-        FIELD_IN_1,
-        FIELD_IN_6 = FIELD_IN_1 + 5,
-        NUM_INPUTS
+
+        // FIELD card (6 CV Inputs)
+        TIME_CV_INPUT,
+        FDBK_CV_INPUT,
+        DIFF_CV_INPUT,
+        RMIX_CV_INPUT,
+        WIDTH_CV_INPUT,
+        FLUTTER_CV_INPUT,
+
+        INPUTS_LEN
     };
+
     enum OutputIds {
         AUDIO_OUT_L,
         AUDIO_OUT_R,
-        FIELD_OUT_1,
-        FIELD_OUT_6 = FIELD_OUT_1 + 5,
-        NUM_OUTPUTS
+
+        OUTPUTS_LEN
     };
+
     enum LightIds {
         LINK_LEFT_LIGHT,
         LINK_RIGHT_LIGHT,
-        // 102 RGB LEDs: 96 knob ring LEDs + 6 status LEDs (3 channels per LED: R, G, B)
-        LEDS_START,
-        NUM_LIGHTS = LEDS_START + (102 * 3)
+        STEREO_LIGHT,
+        FREEZE_LIGHT,
+        SHIMMER_LIGHT,
+
+        LIGHTS_LEN
     };
 
-    hermetic::AlchemyHardware hw;
+    explorer_dsp::EngineState dspState;
 
-    // Active DSP mode: 0 = Cloud Delay & Reverb, 1 = Stereo 3-Band EQ
-    int activeMode = 0;
+    // Latch states
+    bool isStereo = true;
+    bool isFrozen = false;
+    bool isShimmer = false;
 
-    // 32-sample block buffer matching Daisy audio callbacks
-    static constexpr size_t BLOCK_SIZE = 32;
-    float blockInL[BLOCK_SIZE] = {};
-    float blockInR[BLOCK_SIZE] = {};
-    float blockOutL[BLOCK_SIZE] = {};
-    float blockOutR[BLOCK_SIZE] = {};
-    size_t blockIdx = BLOCK_SIZE;
-
-    // Pot Catch and Motion Recording state
-    bool isCaught[6] = {true, true, true, true, true, true};
-    float storedPreset[6] = {0.4f, 0.6f, 0.65f, 0.7f, 0.75f, 0.65f};
-    bool isLocked[6] = {false};
-    std::vector<float> motionBuffer[6];
-    size_t motionPlaybackIdx[6] = {};
+    // Button triggers
+    dsp::BooleanTrigger stereoTrigger;
+    dsp::BooleanTrigger freezeTrigger;
+    dsp::BooleanTrigger shimmerTrigger;
 
     Explorer();
     void process(const ProcessArgs& args) override;
