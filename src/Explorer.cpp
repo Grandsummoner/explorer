@@ -95,71 +95,6 @@ struct ExplorerKnob : ParamWidget {
     }
 };
 
-// Custom NanoVG widget that renders the 102 addressable RGB LEDs around the 6 knobs
-struct ExplorerLedRingsWidget : TransparentWidget {
-    Explorer* module;
-
-    ExplorerLedRingsWidget(Explorer* m) : module(m) {}
-
-    void draw(const DrawArgs& args) override {
-        nvgSave(args.vg);
-
-        // Knob Centers matching explorer_layout.json (in mm, converted to px)
-        Vec knobCentersMm[6] = {
-            Vec(15.50f, 55.30f), Vec(32.98f, 55.30f), Vec(50.46f, 55.30f),
-            Vec(15.50f, 78.80f), Vec(32.98f, 78.80f), Vec(50.46f, 78.80f)
-        };
-
-        const float radius = mm2px(4.3f);
-        const int numLeds = 16;
-        const float minAngle = -135.0f * (M_PI / 180.0f);
-        const float maxAngle = 135.0f * (M_PI / 180.0f);
-
-        for (int k = 0; k < 6; k++) {
-            Vec center = mm2px(knobCentersMm[k]);
-            int startLed = k * 16;
-
-            for (int i = 0; i < numLeds; i++) {
-                float angle = minAngle + ((float)i / (numLeds - 1)) * (maxAngle - minAngle) - (M_PI / 2.0f);
-                float x = center.x + radius * std::cos(angle);
-                float y = center.y + radius * std::sin(angle);
-
-                uint8_t r = 0, g = 0, b = 0;
-                if (module) {
-                    uint32_t rgb = module->hw.leds[startLed + i];
-                    r = (rgb >> 16) & 0xFF;
-                    g = (rgb >> 8) & 0xFF;
-                    b = rgb & 0xFF;
-                }
-
-                // If unlit, render subtle sand/cream guide dot
-                if (r <= 30 && g <= 30 && b <= 30) {
-                    nvgBeginPath(args.vg);
-                    nvgCircle(args.vg, x, y, 0.9f);
-                    nvgFillColor(args.vg, nvgRGBA(165, 155, 140, 150));
-                    nvgFill(args.vg);
-                } else {
-                    NVGcolor col = nvgRGBA(r, g, b, 255);
-
-                    // Lit LED dot
-                    nvgBeginPath(args.vg);
-                    nvgCircle(args.vg, x, y, 1.4f);
-                    nvgFillColor(args.vg, col);
-                    nvgFill(args.vg);
-
-                    // Soft Bloom Halo
-                    nvgBeginPath(args.vg);
-                    nvgCircle(args.vg, x, y, 2.8f);
-                    nvgFillColor(args.vg, nvgRGBA(r, g, b, 50));
-                    nvgFill(args.vg);
-                }
-            }
-        }
-
-        nvgRestore(args.vg);
-    }
-};
-
 Explorer::Explorer() {
     config(NUM_PARAMS, NUM_INPUTS, NUM_OUTPUTS, NUM_LIGHTS);
 
@@ -197,9 +132,23 @@ void Explorer::process(const ProcessArgs& args) {
         cloud_delay::Init(args.sampleRate);
     }
 
-    // Link presence indicators
-    lights[LINK_LEFT_LIGHT].setBrightness(0.9f);
-    lights[LINK_RIGHT_LIGHT].setBrightness(0.9f);
+    // Adjacency detection matching Stellar's exact family integration
+    // The link lights only turn on if placed next to a family module (left, right, or both)
+    auto isFamily = [](Module* m) -> bool {
+        if (!m || !m->model || !m->model->plugin) return false;
+        const std::string& pslug = m->model->plugin->slug;
+        const std::string& mslug = m->model->slug;
+        return (pslug == "SpacesCommand" || mslug == "SpacesCommand" ||
+                pslug == "Intel" || mslug == "Intel" ||
+                pslug == "Beams" || mslug == "Beams" ||
+                pslug == "Stellar" || mslug == "Stellar" ||
+                pslug == "HermeticModular" || mslug == "Explorer");
+    };
+
+    bool linkedLeft = isFamily(leftExpander.module);
+    bool linkedRight = isFamily(rightExpander.module);
+    lights[LINK_LEFT_LIGHT].setBrightness(linkedLeft ? 1.0f : 0.0f);
+    lights[LINK_RIGHT_LIGHT].setBrightness(linkedRight ? 1.0f : 0.0f);
 
     // 1. Read Knobs with Pot Catch
     for (int i = 0; i < 6; i++) {
@@ -286,57 +235,51 @@ struct ExplorerWidget : ModuleWidget {
             addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(x, y)), module, id));
         };
 
-        // 1. Audio I/O Jacks (Row 1): IN L, IN R, OUT L, OUT R
-        inPort(14.00f, 18.10f, Explorer::AUDIO_IN_L);
-        inPort(26.65f, 18.10f, Explorer::AUDIO_IN_R);
-        outPort(39.31f, 18.10f, Explorer::AUDIO_OUT_L);
-        outPort(51.96f, 18.10f, Explorer::AUDIO_OUT_R);
+        // 1. Audio I/O Jacks (Row 1): IN L, IN R, OUT L, OUT R (y = 17.50 mm)
+        inPort(14.00f, 17.50f, Explorer::AUDIO_IN_L);
+        inPort(26.65f, 17.50f, Explorer::AUDIO_IN_R);
+        outPort(39.31f, 17.50f, Explorer::AUDIO_OUT_L);
+        outPort(51.96f, 17.50f, Explorer::AUDIO_OUT_R);
 
-        // 2. Control Buttons (Row 2): PAGE, LOCK, MODE (using ExplorerButton matching Stellar style)
+        // 2. Control Buttons (Row 2): PAGE, LOCK, MODE (y = 33.90 mm)
         {
-            auto* btnPage = createParamCentered<ExplorerButton>(mm2px(Vec(16.50f, 34.60f)), module, Explorer::BTN_PAGE);
+            auto* btnPage = createParamCentered<ExplorerButton>(mm2px(Vec(16.50f, 33.90f)), module, Explorer::BTN_PAGE);
             btnPage->mod = module;
             addParam(btnPage);
 
-            auto* btnLock = createParamCentered<ExplorerButton>(mm2px(Vec(32.98f, 34.60f)), module, Explorer::BTN_LOCK);
+            auto* btnLock = createParamCentered<ExplorerButton>(mm2px(Vec(32.98f, 33.90f)), module, Explorer::BTN_LOCK);
             btnLock->mod = module;
             addParam(btnLock);
 
-            auto* btnMode = createParamCentered<ExplorerButton>(mm2px(Vec(49.46f, 34.60f)), module, Explorer::BTN_PRESET);
+            auto* btnMode = createParamCentered<ExplorerButton>(mm2px(Vec(49.46f, 33.90f)), module, Explorer::BTN_PRESET);
             btnMode->mod = module;
             addParam(btnMode);
         }
 
-        // 3. LED Rings Widget (rendered around the knobs)
-        if (module) {
-            ExplorerLedRingsWidget* ledRings = new ExplorerLedRingsWidget(module);
-            ledRings->box.size = box.size;
-            addChild(ledRings);
-        }
+        // 3. DSP Knobs: 6 Knobs without LED rings (exactly matching Stellar)
+        // Sub-row 1 (TIME, FDBK, DIFF) at y = 52.30 mm
+        addParam(createParamCentered<ExplorerKnob>(mm2px(Vec(15.50f, 52.30f)), module, Explorer::KNOB_1));
+        addParam(createParamCentered<ExplorerKnob>(mm2px(Vec(32.98f, 52.30f)), module, Explorer::KNOB_2));
+        addParam(createParamCentered<ExplorerKnob>(mm2px(Vec(50.46f, 52.30f)), module, Explorer::KNOB_3));
 
-        // 4. DSP Knobs (Row 3): 6 Knobs in 2 rows of 3 (using ExplorerKnob matching Stellar style)
-        // Sub-row 1 (TIME, FDBK, DIFF)
-        addParam(createParamCentered<ExplorerKnob>(mm2px(Vec(15.50f, 55.30f)), module, Explorer::KNOB_1));
-        addParam(createParamCentered<ExplorerKnob>(mm2px(Vec(32.98f, 55.30f)), module, Explorer::KNOB_2));
-        addParam(createParamCentered<ExplorerKnob>(mm2px(Vec(50.46f, 55.30f)), module, Explorer::KNOB_3));
+        // Sub-row 2 (TONE, MOD, MIX) at y = 68.30 mm
+        addParam(createParamCentered<ExplorerKnob>(mm2px(Vec(15.50f, 68.30f)), module, Explorer::KNOB_4));
+        addParam(createParamCentered<ExplorerKnob>(mm2px(Vec(32.98f, 68.30f)), module, Explorer::KNOB_5));
+        addParam(createParamCentered<ExplorerKnob>(mm2px(Vec(50.46f, 68.30f)), module, Explorer::KNOB_6));
 
-        // Sub-row 2 (TONE, MOD, MIX)
-        addParam(createParamCentered<ExplorerKnob>(mm2px(Vec(15.50f, 78.80f)), module, Explorer::KNOB_4));
-        addParam(createParamCentered<ExplorerKnob>(mm2px(Vec(32.98f, 78.80f)), module, Explorer::KNOB_5));
-        addParam(createParamCentered<ExplorerKnob>(mm2px(Vec(50.46f, 78.80f)), module, Explorer::KNOB_6));
+        // 4. Field CV Jacks: 6 CV Ports with 17mm vertical row spacing (completely legible!)
+        // Sub-row 1 (CV 1, CV 2, CV 3) at y = 91.70 mm
+        inPort(15.50f, 91.70f, Explorer::FIELD_IN_1);
+        inPort(32.98f, 91.70f, Explorer::FIELD_IN_1 + 1);
+        inPort(50.46f, 91.70f, Explorer::FIELD_IN_1 + 2);
 
-        // 5. Field CV Jacks (Row 4): 6 CV Ports in 2 rows of 3
-        // Sub-row 1 (CV 1, CV 2, CV 3)
-        inPort(15.50f, 101.50f, Explorer::FIELD_IN_1);
-        inPort(32.98f, 101.50f, Explorer::FIELD_IN_1 + 1);
-        inPort(50.46f, 101.50f, Explorer::FIELD_IN_1 + 2);
+        // Sub-row 2 (CV 4, CV 5, CV 6) at y = 108.70 mm
+        inPort(15.50f, 108.70f, Explorer::FIELD_IN_1 + 3);
+        inPort(32.98f, 108.70f, Explorer::FIELD_IN_1 + 4);
+        inPort(50.46f, 108.70f, Explorer::FIELD_IN_1 + 5);
 
-        // Sub-row 2 (CV 4, CV 5, CV 6)
-        inPort(15.50f, 113.70f, Explorer::FIELD_IN_1 + 3);
-        inPort(32.98f, 113.70f, Explorer::FIELD_IN_1 + 4);
-        inPort(50.46f, 113.70f, Explorer::FIELD_IN_1 + 5);
-
-        // 6. Corner Status/Link Lights (Matching Stellar's small blue link lights)
+        // 5. Corner Status/Link Lights (Matching Stellar's small blue link lights)
+        // Only illuminate when adjacent to family modules
         addChild(createLightCentered<SmallLight<BlueLight>>(mm2px(Vec(5.00f, 5.00f)), module, Explorer::LINK_LEFT_LIGHT));
         addChild(createLightCentered<SmallLight<BlueLight>>(mm2px(Vec(55.96f, 5.00f)), module, Explorer::LINK_RIGHT_LIGHT));
 
