@@ -1,20 +1,17 @@
 {
-  "slug": "HermeticModular",
-  "name": "Hermetic Modular",
+  "slug": "Explorer",
+  "name": "Explorer",
   "version": "2.0.0",
-  "license": "MIT",
-  "brand": "Hermetic Modular",
-  "author": "Hermetic Modular",
-  "authorEmail": "support@hermeticmodular.com",
-  "authorUrl": "https://hermeticmodular.com",
-  "pluginUrl": "https://github.com/hermetic-modular/alchemy-sdk",
-  "manualUrl": "https://hermeticmodular.com/docs",
-  "sourceUrl": "https://github.com/hermetic-modular/alchemy-sdk",
+  "license": "GPL-3.0-or-later",
+  "author": "Grandsummoner",
+  "authorUrl": "https://github.com/Grandsummoner",
+  "pluginUrl": "https://github.com/Grandsummoner/explorer",
+  "sourceUrl": "https://github.com/Grandsummoner/explorer",
   "modules": [
     {
       "slug": "Explorer",
       "name": "Explorer",
-      "description": "12 HP field-programmable DSP module with 102 addressable RGB LEDs, 6 dynamic CV jacks, pot catch, and motion parameter locking (Daisy Seed / STM32H750 digital twin).",
+      "description": "12 HP field-programmable DSP companion -- stereo cloud delay, lush diffusion reverb, 3-band parametric EQ, and dynamic CV field routing. Fully standalone; lights up when linked adjacent to a Spaces Command, Intel, Beams, or Stellar module on either side.",
       "tags": [
         "Equalizer",
         "Delay",

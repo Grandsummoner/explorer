@@ -90,8 +90,8 @@ void ProcessBlock(float** in, float** out, size_t size, hermetic::AlchemyHardwar
     float midGain = (hw.GetKnobValue(1) - 0.5f) * 36.0f;
     float highGain = (hw.GetKnobValue(2) - 0.5f) * 36.0f;
     float midFreq = 150.0f + std::pow(hw.GetKnobValue(3), 2.2f) * 4850.0f;
-    float drive = hw.GetKnobValue(4) * 3.5f;
-    float level = hw.GetKnobValue(5) * 1.5f;
+    float drive = hw.GetKnobValue(4) * 2.5f;
+    float level = hw.GetKnobValue(5) * 1.0f;
 
     lowShelfL.SetLowShelf(180.0f, lowGain, hw.sample_rate);
     lowShelfR.SetLowShelf(180.0f, lowGain, hw.sample_rate);
@@ -117,14 +117,14 @@ void ProcessBlock(float** in, float** out, size_t size, hermetic::AlchemyHardwar
         r = midPeakR.Process(r);
         r = highShelfR.Process(r);
 
-        // Warm Diode Soft-clipping curve
+        // Warm Diode Soft-clipping curve with controlled output
         if (drive > 0.01f) {
             l = std::tanh(l * (1.0f + drive));
             r = std::tanh(r * (1.0f + drive));
         }
 
-        out[0][i] = l * level;
-        out[1][i] = r * level;
+        out[0][i] = std::tanh(l * level);
+        out[1][i] = std::tanh(r * level);
     }
 }
 

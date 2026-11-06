@@ -193,8 +193,8 @@ void Explorer::process(const ProcessArgs& args) {
         ? inputs[AUDIO_IN_R].getVoltage() / 5.0f
         : blockInL[blockIdx];
 
-    outputs[AUDIO_OUT_L].setVoltage(blockOutL[blockIdx] * 5.0f);
-    outputs[AUDIO_OUT_R].setVoltage(blockOutR[blockIdx] * 5.0f);
+    outputs[AUDIO_OUT_L].setVoltage(clamp(blockOutL[blockIdx] * 5.0f, -10.0f, 10.0f));
+    outputs[AUDIO_OUT_R].setVoltage(clamp(blockOutR[blockIdx] * 5.0f, -10.0f, 10.0f));
 
     // CV Field Jacks
     for (int i = 0; i < 6; i++) {

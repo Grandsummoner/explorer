@@ -1,44 +1,18 @@
-# Hermetic Modular — Explorer (VCV Rack v2 & Daisy Hardware Dual-Target Plugin)
+# Explorer (VCV Rack v2 Plugin)
 
-**Explorer** is a 12 HP field-programmable digital Eurorack module emulator and firmware codebase powered by Hermetic Modular's **Alchemy SDK** and the **Electrosmith Daisy** platform.
-
-This repository is dual-target ready:
-1. **VCV Rack v2 Plugin**: Compile as a desktop virtual module for Linux, macOS (x64 & ARM64 Apple Silicon), and Windows.
-2. **Daisy Seed Hardware Firmware**: Compile for the physical Alchemy Lab / Electrosmith Daisy Seed (STM32H750, 480 MHz ARM Cortex-M7) and flash via USB DFU.
+**Explorer** is a 12 HP field-programmable DSP companion module for VCV Rack v2, developed by **Grandsummoner** to match the visual language and companion integration of **Stellar**, **Spaces Command**, **Intel**, and **Beams**.
 
 ---
 
 ## Features
-* **102 Addressable RGB LEDs**:
-  * 16-LED radial rings encircle each of the 6 main potentiometers (96 LEDs total) with dynamic arc/dot fill, ghost targets, and motion playback animations.
-  * 6 status LEDs for page indication and jack modes.
-* **Pot Catch (Anti-Jump Protection)**:
-  * When swapping pages or loading presets, parameters will not jump until the physical knob position crosses ("catches") the stored preset value.
-* **Parameter Lock (Motion Recording)**:
-  * Capture real-time knob motion into a cycling circular memory buffer with live LED playback loops.
-* **10 Jacks**:
-  * 4 Fixed Audio Jacks: Stereo In L/R and Stereo Out L/R.
-  * **6 Field-Programmable Dynamic Jacks**: Software-configurable as CV Inputs or CV Outputs with active RGB halos.
-* **DSP Engines Included**:
-  * **Cloud Delay & Reverb**: Stereo cross-feedback ping-pong delay with damping and lush 4-stage diffusion shimmer reverb.
-  * **Stereo 3-Band Parametric EQ**: Low shelf, sweepable mid peak, high shelf, and warm analog diode soft-clipping saturation.
-
----
-
-## Panel Design & Palette Options
-The `res/` directory includes 3 panel design palettes:
-1. **`res/Explorer_ObsidianGold.svg` (Default `Explorer.svg`)**:
-   * Deep matte anodized black aluminum faceplate with warm alchemical gold accents and white typography.
-2. **`res/Explorer_SilverCyan.svg`**:
-   * Industrial brushed natural silver aluminum faceplate with electric cyan accents and dark slate typography.
-3. **`res/Explorer_MidnightVoid.svg`**:
-   * Midnight aerospace deep indigo finish with fluorescent neon magenta/violet rings.
-
-*To change the active panel palette:*
-Simply replace `res/Explorer.svg` with your preferred SVG file before compiling:
-```bash
-cp res/Explorer_SilverCyan.svg res/Explorer.svg
-```
+* **Companion Adjacency Detection**: Dual blue status lights illuminate independently when placed adjacent to a family module (`Spaces Command`, `Intel`, `Beams`, `Stellar`).
+* **Clean Hardware Aesthetic**: Cream matte finish, micro-typography, and solid tactile knobs matching Stellar.
+* **10 Eurorack Jacks**:
+  * 4 Audio Jacks: Stereo In L/R and Stereo Out L/R with 0 dB calibrated unity gain and soft-saturation limiting.
+  * 6 Field-Programmable CV Jacks: 17 mm vertical row clearance with high-legibility vector labeling.
+* **Dual DSP Engines**:
+  * **Stereo Cloud Delay & Reverb**: Cross-feedback ping-pong delay with damping and 4-stage diffusion reverb.
+  * **Stereo 3-Band Parametric EQ**: Low shelf, sweepable mid peak, high shelf, and warm analog diode soft-clipping.
 
 ---
 
@@ -94,6 +68,9 @@ make -f Makefile.daisy program-dfu
 
 ---
 
-## License
-Released under the **MIT License**, fully compatible with and respecting the Hermetic Modular Alchemy SDK.
-See `LICENSE` for details.
+## License & Acknowledgments
+Released under the **GNU General Public License v3.0 or later** (`GPL-3.0-or-later`), matching the VCV Rack SDK licensing standards.
+* Built using the **VCV Rack SDK** (GPLv3).
+* VCV® is a registered trademark of VCV (https://vcvrack.com).
+* Designed by **Grandsummoner** as a companion module to **Stellar**, **Spaces Command**, **Intel**, and **Beams**.
+* See `LICENSE` for details.

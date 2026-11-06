@@ -108,17 +108,29 @@ void ProcessBlock(float** in, float** out, size_t size, hermetic::AlchemyHardwar
         writeIdxL = (writeIdxL + 1) % MAX_DELAY_SAMPLES;
         writeIdxR = (writeIdxR + 1) % MAX_DELAY_SAMPLES;
 
-        // Diffusion reverb stage
-        float verbL = (inL + delayedL * delayMix) * reverbSize;
-        float verbR = (inR + delayedR * delayMix) * reverbSize;
+        // Diffusion reverb stage with normalized send
+        float revSendL = (inL * 0.5f + delayedL * 0.5f) * reverbSize;
+        float revSendR = (inR * 0.5f + delayedR * 0.5f) * reverbSize;
+        float verbL = revSendL;
+        float verbR = revSendR;
         for (int d = 0; d < 4; d++) {
             verbL = diffusersL[d].Process(verbL);
             verbR = diffusersR[d].Process(verbR);
         }
 
-        // Sum dry, delay, and reverb
-        out[0][i] = inL * 0.8f + delayedL * delayMix + verbL * reverbMix;
-        out[1][i] = inR * 0.8f + delayedR * delayMix + verbR * reverbMix;
+        // Balanced dry/wet gain staging calibrated for unity (0 dB) output
+        float dryAmount = 1.0f - delayMix * 0.5f;
+        float delayWetAmount = delayMix * 0.6f;
+        float delayMixedL = inL * dryAmount + delayedL * delayWetAmount;
+        float delayMixedR = inR * dryAmount + delayedR * delayWetAmount;
+
+        // Reverb blend
+        float finalL = delayMixedL * (1.0f - reverbMix * 0.35f) + verbL * (reverbMix * 0.5f);
+        float finalR = delayMixedR * (1.0f - reverbMix * 0.35f) + verbR * (reverbMix * 0.5f);
+
+        // Musical soft limiter to prevent clipping and keep output strictly within Eurorack limits
+        out[0][i] = std::tanh(finalL);
+        out[1][i] = std::tanh(finalR);
     }
 }
 
