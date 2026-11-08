@@ -237,13 +237,13 @@ struct ExplorerWidget : ModuleWidget {
             addOutput(createOutputCentered<PJ301MPort>(mm2px(Vec(x, y)), module, id));
         };
 
-        // 1. Audio I/O Jacks (Row 1): IN L, IN R, OUT L, OUT R (y = 17.4 mm)
-        inPort(15.57f, 17.4f, Explorer::AUDIO_IN_L);
-        inPort(27.11f, 17.4f, Explorer::AUDIO_IN_R);
-        outPort(38.65f, 17.4f, Explorer::AUDIO_OUT_L);
-        outPort(50.19f, 17.4f, Explorer::AUDIO_OUT_R);
+        // 1. Audio I/O Jacks (Row 1): IN L, IN R, OUT L, OUT R (y = 18.7 mm)
+        inPort(15.00f, 18.7f, Explorer::AUDIO_IN_L);
+        inPort(27.00f, 18.7f, Explorer::AUDIO_IN_R);
+        outPort(39.00f, 18.7f, Explorer::AUDIO_OUT_L);
+        outPort(51.00f, 18.7f, Explorer::AUDIO_OUT_R);
 
-        // 2. Control Buttons (Row 2): STEREO, FREEZE, SHIMMER (y = 32.2 mm)
+        // 2. Control Buttons (Row 2): STEREO, FREEZE, SHIMMER (y = 34.3 mm)
         {
             auto addBtn = [&](float x, float y, int paramId, int lightId, NVGcolor litCol) {
                 auto* btn = createParamCentered<StellarButton>(mm2px(Vec(x, y)), module, paramId);
@@ -253,41 +253,41 @@ struct ExplorerWidget : ModuleWidget {
                 addParam(btn);
             };
 
-            addBtn(17.49f, 32.2f, Explorer::STEREO_PARAM, Explorer::STEREO_LIGHT, nvgRGB(0x8A, 0x64, 0x23));  // Brass
-            addBtn(32.88f, 32.2f, Explorer::FREEZE_PARAM, Explorer::FREEZE_LIGHT, nvgRGB(0x8A, 0x2A, 0x2A));  // Terracotta / Maroon
-            addBtn(48.27f, 32.2f, Explorer::SHIMMER_PARAM, Explorer::SHIMMER_LIGHT, nvgRGB(0x8A, 0x64, 0x23)); // Brass
+            addBtn(17.50f, 34.3f, Explorer::STEREO_PARAM, Explorer::STEREO_LIGHT, nvgRGB(0x8A, 0x64, 0x23));  // Brass
+            addBtn(32.98f, 34.3f, Explorer::FREEZE_PARAM, Explorer::FREEZE_LIGHT, nvgRGB(0x8A, 0x2A, 0x2A));  // Terracotta / Maroon
+            addBtn(48.46f, 34.3f, Explorer::SHIMMER_PARAM, Explorer::SHIMMER_LIGHT, nvgRGB(0x8A, 0x64, 0x23)); // Brass
         }
 
         // 3. SPACE Card: 6 Knobs
-        // Row 1 (y = 48.0 mm): TIME, FDBK, DIFF
-        addParam(createParamCentered<StellarKnob>(mm2px(Vec(17.49f, 48.0f)), module, Explorer::TIME_PARAM));
-        addParam(createParamCentered<StellarKnob>(mm2px(Vec(32.88f, 48.0f)), module, Explorer::FDBK_PARAM));
-        addParam(createParamCentered<StellarKnob>(mm2px(Vec(48.27f, 48.0f)), module, Explorer::DIFF_PARAM));
+        // Row 1 (y = 51.1 mm): TIME, FDBK, DIFF
+        addParam(createParamCentered<StellarKnob>(mm2px(Vec(17.50f, 51.1f)), module, Explorer::TIME_PARAM));
+        addParam(createParamCentered<StellarKnob>(mm2px(Vec(32.98f, 51.1f)), module, Explorer::FDBK_PARAM));
+        addParam(createParamCentered<StellarKnob>(mm2px(Vec(48.46f, 51.1f)), module, Explorer::DIFF_PARAM));
 
-        // Row 2 (y = 64.0 mm): DAMP, D-MIX, R-MIX
-        addParam(createParamCentered<StellarKnob>(mm2px(Vec(17.49f, 64.0f)), module, Explorer::DAMP_PARAM));
-        addParam(createParamCentered<StellarKnob>(mm2px(Vec(32.88f, 64.0f)), module, Explorer::DMIX_PARAM));
-        addParam(createParamCentered<StellarKnob>(mm2px(Vec(48.27f, 64.0f)), module, Explorer::RMIX_PARAM));
+        // Row 2 (y = 64.9 mm): DAMP, D-MIX, R-MIX
+        addParam(createParamCentered<StellarKnob>(mm2px(Vec(17.50f, 64.9f)), module, Explorer::DAMP_PARAM));
+        addParam(createParamCentered<StellarKnob>(mm2px(Vec(32.98f, 64.9f)), module, Explorer::DMIX_PARAM));
+        addParam(createParamCentered<StellarKnob>(mm2px(Vec(48.46f, 64.9f)), module, Explorer::RMIX_PARAM));
 
-        // 4. SCULPT Card: 3 Knobs (y = 82.4 mm): WIDTH, COLOR, FLUTTER
-        addParam(createParamCentered<StellarKnob>(mm2px(Vec(17.49f, 82.4f)), module, Explorer::WIDTH_PARAM));
-        addParam(createParamCentered<StellarKnob>(mm2px(Vec(32.88f, 82.4f)), module, Explorer::COLOR_PARAM));
-        addParam(createParamCentered<StellarKnob>(mm2px(Vec(48.27f, 82.4f)), module, Explorer::FLUTTER_PARAM));
+        // 4. SCULPT Card: 3 Knobs (y = 83.3 mm): WIDTH, COLOR, FLUTTER
+        addParam(createParamCentered<StellarKnob>(mm2px(Vec(17.50f, 83.3f)), module, Explorer::WIDTH_PARAM));
+        addParam(createParamCentered<StellarKnob>(mm2px(Vec(32.98f, 83.3f)), module, Explorer::COLOR_PARAM));
+        addParam(createParamCentered<StellarKnob>(mm2px(Vec(48.46f, 83.3f)), module, Explorer::FLUTTER_PARAM));
 
         // 5. FIELD Card: 6 CV Jacks
-        // Row 1 (y = 100.6 mm): TIME CV, FDBK CV, DIFF CV
-        inPort(17.49f, 100.6f, Explorer::TIME_CV_INPUT);
-        inPort(32.88f, 100.6f, Explorer::FDBK_CV_INPUT);
-        inPort(48.27f, 100.6f, Explorer::DIFF_CV_INPUT);
+        // Row 1 (y = 101.5 mm): TIME CV, FDBK CV, DIFF CV
+        inPort(17.50f, 101.5f, Explorer::TIME_CV_INPUT);
+        inPort(32.98f, 101.5f, Explorer::FDBK_CV_INPUT);
+        inPort(48.46f, 101.5f, Explorer::DIFF_CV_INPUT);
 
-        // Row 2 (y = 114.2 mm): R-MIX CV, WIDTH CV, FLUTTER CV
-        inPort(17.49f, 114.2f, Explorer::RMIX_CV_INPUT);
-        inPort(32.88f, 114.2f, Explorer::WIDTH_CV_INPUT);
-        inPort(48.27f, 114.2f, Explorer::FLUTTER_CV_INPUT);
+        // Row 2 (y = 114.7 mm): R-MIX CV, WIDTH CV, FLUTTER CV
+        inPort(17.50f, 114.7f, Explorer::RMIX_CV_INPUT);
+        inPort(32.98f, 114.7f, Explorer::WIDTH_CV_INPUT);
+        inPort(48.46f, 114.7f, Explorer::FLUTTER_CV_INPUT);
 
         // 6. Corner Adjacency Status Lights
-        addChild(createLightCentered<SmallLight<BlueLight>>(mm2px(Vec(5.00f, 5.00f)), module, Explorer::LINK_LEFT_LIGHT));
-        addChild(createLightCentered<SmallLight<BlueLight>>(mm2px(Vec(55.96f, 5.00f)), module, Explorer::LINK_RIGHT_LIGHT));
+        addChild(createLightCentered<SmallLight<BlueLight>>(mm2px(Vec(5.50f, 5.50f)), module, Explorer::LINK_LEFT_LIGHT));
+        addChild(createLightCentered<SmallLight<BlueLight>>(mm2px(Vec(55.46f, 5.50f)), module, Explorer::LINK_RIGHT_LIGHT));
     }
 
     void appendContextMenu(Menu* menu) override {
