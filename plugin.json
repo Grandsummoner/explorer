@@ -1,9 +1,11 @@
 {
-  "slug": "Explorer",
+  "slug": "Grandsummoner-Explorer",
   "name": "Explorer",
+  "brand": "Grandsummoner",
   "version": "2.0.0",
   "license": "GPL-3.0-or-later",
   "author": "Grandsummoner",
+  "authorEmail": "percivale09@gmail.com",
   "authorUrl": "https://github.com/Grandsummoner",
   "pluginUrl": "https://github.com/Grandsummoner/explorer",
   "sourceUrl": "https://github.com/Grandsummoner/explorer",
@@ -11,7 +13,7 @@
     {
       "slug": "Explorer",
       "name": "Explorer",
-      "description": "12 HP field-programmable DSP companion -- stereo spatial cloud delay, diffusion reverb, octave shimmer bloom, stereo width expansion, and analog tape flutter. Fully standalone; lights up when linked adjacent to a Spaces Command, Intel, Beams, or Stellar module on either side.",
+      "description": "12 HP field-programmable DSP companion — stereo spatial cloud delay, diffusion reverb, octave shimmer bloom, stereo width expansion, and analog tape flutter. Fully standalone; lights up when linked adjacent to a Spaces Command, Intel, Beams, or Stellar module on either side.",
       "tags": [
         "Delay",
         "Reverb",
