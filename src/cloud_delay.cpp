@@ -62,6 +62,10 @@ static float shimRead = 0.f;
 static float tiltStateL = 0.f;
 static float tiltStateR = 0.f;
 
+// Tape motor inertia state (smooth analog delay time slewing)
+static float smoothedDelayL = 4800.f;
+static float smoothedDelayR = 4800.f;
+
 void Init(float sampleRate) {
     (void)sampleRate;
     std::memset(delayBufL, 0, sizeof(delayBufL));
@@ -74,6 +78,7 @@ void Init(float sampleRate) {
     shimWrite = 0;
     shimRead = 0.f;
     tiltStateL = tiltStateR = 0.f;
+    smoothedDelayL = smoothedDelayR = 4800.f;
 
     // Mutually prime delays for dense, non-metallic spatial diffusion
     diffL[0].setSize(251, 0.60f);
@@ -131,12 +136,18 @@ void ProcessSample(float inL, float inR, float& outL, float& outR, const EngineS
         ? (timeSec * 1.333f * sampleRate - flutterOffset)
         : (timeSec * sampleRate - flutterOffset);
 
-    delaySamplesL = rack::math::clamp(delaySamplesL, 10.f, (float)(MAX_DELAY - 5));
-    delaySamplesR = rack::math::clamp(delaySamplesR, 10.f, (float)(MAX_DELAY - 5));
+    float targetSamplesL = rack::math::clamp(delaySamplesL, 10.f, (float)(MAX_DELAY - 5));
+    float targetSamplesR = rack::math::clamp(delaySamplesR, 10.f, (float)(MAX_DELAY - 5));
 
-    float readPosL = (float)writeIdx - delaySamplesL;
+    // Analog tape motor inertia (1-pole slew rate)
+    // ~16 Hz tracking bandwidth yields rich musical Doppler pitch transitions
+    float timeSlew = 1.0f - std::exp(-2.0f * (float)M_PI * 16.0f / sampleRate);
+    smoothedDelayL += timeSlew * (targetSamplesL - smoothedDelayL);
+    smoothedDelayR += timeSlew * (targetSamplesR - smoothedDelayR);
+
+    float readPosL = (float)writeIdx - smoothedDelayL;
     if (readPosL < 0.f) readPosL += MAX_DELAY;
-    float readPosR = (float)writeIdx - delaySamplesR;
+    float readPosR = (float)writeIdx - smoothedDelayR;
     if (readPosR < 0.f) readPosR += MAX_DELAY;
 
     float dlyL = readDelayCubic(delayBufL, readPosL);

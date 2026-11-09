@@ -146,6 +146,7 @@ void Explorer::process(const ProcessArgs& args) {
                 pslug == "Beams" || mslug == "Beams" ||
                 pslug == "Stellar" || mslug == "Stellar" ||
                 pslug == "Explorer" || mslug == "Explorer" ||
+                pslug == "Grandsummoner-Explorer" ||
                 pslug == "HermeticModular");
     };
 
@@ -196,9 +197,15 @@ void Explorer::process(const ProcessArgs& args) {
     float outL = 0.f, outR = 0.f;
     explorer_dsp::ProcessSample(inL, inR, outL, outR, dspState, args.sampleRate);
 
-    // Scaled output to Eurorack standard ±5V
-    outputs[AUDIO_OUT_L].setVoltage(clamp(outL * 5.0f, -10.0f, 10.0f));
-    outputs[AUDIO_OUT_R].setVoltage(clamp(outR * 5.0f, -10.0f, 10.0f));
+    // Scaled output to Eurorack standard ±5V with mono auto-summing
+    if (!outputs[AUDIO_OUT_R].isConnected()) {
+        float monoSum = (outL + outR) * 0.707f;
+        outputs[AUDIO_OUT_L].setVoltage(clamp(monoSum * 5.0f, -10.0f, 10.0f));
+        outputs[AUDIO_OUT_R].setVoltage(0.0f);
+    } else {
+        outputs[AUDIO_OUT_L].setVoltage(clamp(outL * 5.0f, -10.0f, 10.0f));
+        outputs[AUDIO_OUT_R].setVoltage(clamp(outR * 5.0f, -10.0f, 10.0f));
+    }
 }
 
 json_t* Explorer::dataToJson() {
@@ -253,9 +260,9 @@ struct ExplorerWidget : ModuleWidget {
                 addParam(btn);
             };
 
-            addBtn(17.50f, 34.3f, Explorer::STEREO_PARAM, Explorer::STEREO_LIGHT, nvgRGB(0x8A, 0x64, 0x23));  // Brass
-            addBtn(32.98f, 34.3f, Explorer::FREEZE_PARAM, Explorer::FREEZE_LIGHT, nvgRGB(0x8A, 0x2A, 0x2A));  // Terracotta / Maroon
-            addBtn(48.46f, 34.3f, Explorer::SHIMMER_PARAM, Explorer::SHIMMER_LIGHT, nvgRGB(0x8A, 0x64, 0x23)); // Brass
+            addBtn(17.50f, 34.3f, Explorer::STEREO_PARAM, Explorer::STEREO_LIGHT, nvgRGB(0x2E, 0x4A, 0x6E));  // Navy / Teal (Spatial Mode)
+            addBtn(32.98f, 34.3f, Explorer::FREEZE_PARAM, Explorer::FREEZE_LIGHT, nvgRGB(0x8A, 0x2A, 0x2A));  // Terracotta / Maroon (Buffer Freeze)
+            addBtn(48.46f, 34.3f, Explorer::SHIMMER_PARAM, Explorer::SHIMMER_LIGHT, nvgRGB(0x8A, 0x64, 0x23)); // Brass (Octave Shimmer Bloom)
         }
 
         // 3. SPACE Card: 6 Knobs
