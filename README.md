@@ -121,33 +121,6 @@ Explorer is organized into three intuitive functional cards: **TIME / REGEN**, *
 
 ---
 
-## Building and Installation
-
-### Prebuilt Plugin Package
-Download the latest `Explorer-2.0.0-<platform>.vcvplugin` from the repository's [Releases](https://github.com/Grandsummoner/explorer/releases) section and extract it into your VCV Rack `plugins` directory:
-- **Windows**: `Documents/Rack2/plugins/`
-- **macOS**: `Documents/Rack2/plugins/`
-- **Linux**: `~/.Rack2/plugins/`
-
-### Building from Source
-Ensure you have the [VCV Rack SDK v2](https://vcvrack.com/downloads/) installed.
-
-```bash
-# Clone the repository
-git clone https://github.com/Grandsummoner/explorer.git
-cd explorer
-
-# Set your Rack SDK directory
-export RACK_DIR=/path/to/Rack-SDK
-
-# Build the distributable package
-make -j2 dist
-```
-
-The compiled package will be located in `dist/Explorer-2.0.0-<platform>.vcvplugin`.
-
----
-
 ## License
 
 This software is released under the **GNU General Public License v3.0 or later** (GPL-3.0-or-later).  
