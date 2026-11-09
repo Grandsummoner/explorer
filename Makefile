@@ -5,8 +5,8 @@ CFLAGS +=
 CXXFLAGS += -std=c++17 -I./src
 LDFLAGS +=
 
-# Explicitly exclude any hardware target files if present in the tree
-SOURCES += $(filter-out src/main_daisy.cpp, $(wildcard src/*.cpp) $(wildcard src/**/*.cpp))
+# Strictly specify active VCV Rack module sources (immune to stray/leftover files)
+SOURCES := src/plugin.cpp src/Explorer.cpp src/cloud_delay.cpp
 
 DISTRIBUTABLES += res
 DISTRIBUTABLES += $(wildcard LICENSE*)
