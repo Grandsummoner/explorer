@@ -5,7 +5,8 @@ CFLAGS +=
 CXXFLAGS += -std=c++17 -I./src
 LDFLAGS +=
 
-SOURCES += $(wildcard src/*.cpp) $(wildcard src/**/*.cpp)
+# Explicitly exclude any hardware target files if present in the tree
+SOURCES += $(filter-out src/main_daisy.cpp, $(wildcard src/*.cpp) $(wildcard src/**/*.cpp))
 
 DISTRIBUTABLES += res
 DISTRIBUTABLES += $(wildcard LICENSE*)
