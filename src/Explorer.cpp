@@ -141,12 +141,11 @@ void Explorer::process(const ProcessArgs& args) {
         if (!m || !m->model || !m->model->plugin) return false;
         const std::string& pslug = m->model->plugin->slug;
         const std::string& mslug = m->model->slug;
-        return (pslug == "SpacesCommand" || mslug == "SpacesCommand" ||
-                pslug == "Intel" || mslug == "Intel" ||
-                pslug == "Beams" || mslug == "Beams" ||
-                pslug == "Stellar" || mslug == "Stellar" ||
-                pslug == "Explorer" || mslug == "Explorer" ||
-                pslug == "Grandsummoner-Explorer" ||
+        return (mslug == "SpacesCommand" || pslug == "SpacesCommand" || pslug == "Grandsummoner-SpacesCommand" ||
+                mslug == "Intel"         || pslug == "Intel"         || pslug == "Grandsummoner-Intel" ||
+                mslug == "Beams"         || pslug == "Beams"         || pslug == "Grandsummoner-Beams" ||
+                mslug == "Stellar"       || pslug == "Stellar"       || pslug == "Grandsummoner-Stellar" ||
+                mslug == "Explorer"      || pslug == "Explorer"      || pslug == "Grandsummoner-Explorer" ||
                 pslug == "HermeticModular");
     };
 

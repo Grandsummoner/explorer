@@ -53,21 +53,6 @@ This repository includes `.github/workflows/release.yml`. When you push this rep
 
 ---
 
-## Compiling for Physical Hardware (Electrosmith Daisy)
-
-### Prerequisites
-* ARM GNU Toolchain (`arm-none-eabi-gcc`).
-* `dfu-util` for flashing over USB.
-* [libDaisy](https://github.com/electro-smith/libDaisy) and [DaisySP](https://github.com/electro-smith/DaisySP).
-
-### Build Commands
-```bash
-make -f Makefile.daisy
-make -f Makefile.daisy program-dfu
-```
-
----
-
 ## License & Acknowledgments
 Released under the **GNU General Public License v3.0 or later** (`GPL-3.0-or-later`), matching the VCV Rack SDK licensing standards.
 * Built using the **VCV Rack SDK** (GPLv3).
