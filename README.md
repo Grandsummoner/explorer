@@ -1,61 +1,50 @@
-# Explorer (VCV Rack v2 Plugin)
+# Grandsummoner Explorer
 
-**Explorer** is a 12 HP field-programmable DSP companion module for VCV Rack v2, developed by **Grandsummoner** to match the visual language and companion integration of **Stellar**, **Spaces Command**, **Intel**, and **Beams**.
+> **12 HP Field-Programmable Tape-Cloud Delay, Diffusion Reverb & Shimmer Bloom**
 
----
-
-## Features
-* **Companion Adjacency Detection**: Dual blue status lights illuminate independently when placed adjacent to a family module (`Spaces Command`, `Intel`, `Beams`, `Stellar`).
-* **Clean Hardware Aesthetic**: Cream matte finish, micro-typography, and solid tactile knobs matching Stellar.
-* **10 Eurorack Jacks**:
-  * 4 Audio Jacks: Stereo In L/R and Stereo Out L/R with 0 dB calibrated unity gain and soft-saturation limiting.
-  * 6 Field-Programmable CV Jacks: 17 mm vertical row clearance with high-legibility vector labeling.
-* **Dual DSP Engines**:
-  * **Stereo Cloud Delay & Reverb**: Cross-feedback ping-pong delay with damping and 4-stage diffusion reverb.
-  * **Stereo 3-Band Parametric EQ**: Low shelf, sweepable mid peak, high shelf, and warm analog diode soft-clipping.
+<p align="center">
+  <img src="res/Explorer.svg" alt="Grandsummoner Explorer Front Panel" width="380" />
+</p>
 
 ---
 
-## Compiling for VCV Rack v2
+## Overview
 
-### Prerequisites
-* Download and extract the [VCV Rack v2 SDK](https://vcvrack.com/downloads/) for your operating system.
-* A standard C++17 build environment:
-  * **macOS**: Xcode Command Line Tools (`xcode-select --install`).
-  * **Linux**: `build-essential`, `libgl-dev`, `libglu-dev`, `libasound2-dev`.
-  * **Windows**: MSYS2 (Mingw64).
+**Explorer** is a 12 HP spatial effects module for [VCV Rack v2](https://vcvrack.com/), combining an analog-modeled tape delay, an expansive diffusion reverb network, and an octave-up pitch-shifted shimmer bloom. Built around tape-loop physics and dense multi-tap delay networks, Explorer delivers everything from subtle vintage tape warmth and slapback echoes to infinite frozen ambient soundscapes.
 
-### Build Commands
-1. Point `RACK_DIR` to your extracted Rack-SDK:
-   ```bash
-   export RACK_DIR=/path/to/Rack-SDK
-   ```
-2. Compile and package the `.vcvplugin` bundle:
-   ```bash
-   make -j4 dist
-   ```
-3. Copy the resulting `.vcvplugin` file from the `dist/` folder into your VCV Rack `plugins/` directory:
-   * **macOS**: `~/Documents/Rack2/plugins/`
-   * **Linux**: `~/.Rack2/plugins/`
-   * **Windows**: `Documents/Rack2/plugins/`
+Explorer is engineered for hands-on live performance and deep modular generative patches. It features genuine tape-motor inertia emulation (smoothing delay-time modulation into authentic mechanical pitch glides), dedicated CV inputs for every primary axis, and a trio of tactile latching performance buttons.
 
 ---
 
-## Automated GitHub Actions CI Releases
+## The Grandsummoner Module Family
 
-This repository includes `.github/workflows/release.yml`. When you push this repository to GitHub and publish a tag (e.g. `git tag v1.0.0 && git push origin v1.0.0`), GitHub Actions will automatically:
-1. Cross-compile the plugin across 4 platforms:
-   * **Linux x64**
-   * **macOS x64 (Intel)**
-   * **macOS ARM64 (Apple Silicon M1/M2/M3/M4)**
-   * **Windows x64**
-2. Create a GitHub Release and attach the pre-compiled `.vcvplugin` binaries for everyone to download!
+Explorer is a core member of the **Grandsummoner Eurorack Family**, designed to form a complete, unified modular synthesis ecosystem:
+
+| Module | Width | Primary Function | Role in Ecosystem |
+| :--- | :--- | :--- | :--- |
+| **Spaces Command** | 38 HP | Dual-Scene Probabilistic CV/Gate Sequencer & Arpeggiator | Master Composition & Clock Brain |
+| **Beams** | 18 HP | Quad Algorithmic Euclidean Drum Engine & Sampler | Rhythm, Percussion & Clock Sync |
+| **Stellar** | 14 HP | Dual-Voice Multi-Model Synthesizer Companion | Primary Melodic & Harmonic Voice |
+| **Intel** | 14 HP | Modulation Matrix, Dual FX Engine & Metering Ladder | Utility, Inter-Module Modulation & Modulation Router |
+| **Explorer** | 12 HP | Tape-Cloud Delay, Diffusion Reverb & Octave Shimmer | Master Spatialization, Diffusion & Ambient Textures |
+
+### Shared Design Language
+Every Grandsummoner module shares an elegant vintage-laboratory aesthetic:
+- **Warm Sand Cards** (`#F5F1E9` top gradient down to `#EDE7DC`) framed by hairline `0.4–0.5pt` bronze borders (`#8A7F6A`).
+- **Deep Obsidian Knobs** with ivory indicator lines (`#E8E0D0`).
+- **Tactile Color-Coded Performance Buttons**: Navy/Teal (`#2E4A6E`) for stereo imaging, Maroon (`#8A2A2A`) for freeze/muting, and Brass (`#8A6423`) for harmonic enrichment.
+- **Center-Detent Micro-Dots** on bipolar knobs (`WIDTH`, `COLOR`) for instant zero-position alignment.
+
+### Standalone vs. Family Operation
+- **100% Standalone**: Explorer operates completely independently. All audio I/O and CV jacks adhere to standard Eurorack electrical specifications. Patch any external audio into `IN L/R` and modulate parameters using standard 0–10V or bipolar ±5V CV.
+- **Universal Adjacency Link**: When placed directly adjacent to any Grandsummoner family module (**Spaces Command**, **Intel**, **Beams**, or **Stellar**) on either the left or right side, Explorer's side connector LEDs (`LINK L` and `LINK R`) automatically illuminate, confirming physical enclosure alignment.
+
+### Cross-Module Synergies
+- **With Stellar**: Send Stellar's `MASTER L/R` outputs directly into Explorer's `IN L/R`. Engaging `SHIMMER` and `FREEZE` transforms Stellar's Moog-style ladder filter plucks into sustained orchestral pads.
+- **With Spaces Command**: Modulate Explorer's `TIME CV` and `REGEN CV` from Spaces Command's Voice 2 auxiliary pitch and gate outputs for rhythmic delay flutter locked to sequence transitions.
+- **With Intel**: When Intel's modulation channels are active, use Intel's `TRIG 1–4` outputs to trigger Explorer's `FREEZE` or `SHIMMER` CV jacks on selected rhythmic beats.
+- **With Beams**: Route Beams' stereo drum output into Explorer with a subtle `WIDTH` boost and 15% `MIX` for tape-warmed studio room reverberation.
 
 ---
 
-## License & Acknowledgments
-Released under the **GNU General Public License v3.0 or later** (`GPL-3.0-or-later`), matching the VCV Rack SDK licensing standards.
-* Built using the **VCV Rack SDK** (GPLv3).
-* VCV® is a registered trademark of VCV (https://vcvrack.com).
-* Designed by **Grandsummoner** as a companion module to **Stellar**, **Spaces Command**, **Intel**, and **Beams**.
-* See `LICENSE` for details.
+## User Guide & Controls
